@@ -17,6 +17,7 @@ import { graphRouter } from './routes/graph.js';
 import { exploreRouter, setWebSocketBroadcast } from './routes/explore.js';
 import { configRouter } from './routes/config.js';
 import { authRouter } from './routes/auth.js';
+import { feedbackRouter } from './routes/feedback.js';
 import { requireAuth, rateLimit, contentFilter } from './middleware/auth.js';
 import { getDatabase, cleanOldRateLimits } from './db.js';
 
@@ -86,6 +87,7 @@ export async function startServer(): Promise<void> {
   app.use('/api/discoveries', requireAuth, discoveriesRouter);
   app.use('/api/graph', requireAuth, graphRouter);
   app.use('/api/config', requireAuth, configRouter);
+  app.use('/api/feedback', feedbackRouter);
   
   // Explore route with additional guardrails
   app.use('/api/explore', 

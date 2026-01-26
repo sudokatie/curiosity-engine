@@ -6,6 +6,7 @@ import { SeedList } from './components/seeds/SeedList';
 import { DiscoveryGrid } from './components/discoveries/DiscoveryGrid';
 import { SettingsPanel } from './components/settings/SettingsPanel';
 import { AuthForm } from './components/auth/AuthForm';
+import { FeedbackButton } from './components/feedback/FeedbackButton';
 import { useUIStore } from './store/ui';
 import { useAuthStore } from './store/auth';
 import './styles/globals.css';
@@ -63,9 +64,12 @@ function AppContent() {
   }
 
   return (
-    <Layout>
-      <MainContent />
-    </Layout>
+    <>
+      <Layout>
+        <MainContent />
+      </Layout>
+      <FeedbackButton />
+    </>
   );
 }
 

@@ -1,0 +1,80 @@
+# Curiosity Engine - Default Configuration
+# Copy to config/local.yaml and modify for your setup
+
+curiosity:
+  # Heartbeat exploration (quick sessions during idle)
+  heartbeat:
+    enabled: true
+    duration_minutes: 5
+
+  # Deep dive exploration (longer scheduled sessions)
+  deep_dive:
+    enabled: true
+    cron: "0 3 * * *"  # 3 AM daily
+    duration_minutes: 30
+
+  # Exploration parameters
+  exploration:
+    # Maximum depth from initial seed
+    max_depth: 5
+    # Parallel threads (1 = single-threaded)
+    max_breadth: 1
+    # Timeout for fetching sources (ms)
+    source_timeout_ms: 30000
+    # Delay between fetches (ms) - be respectful
+    fetch_delay_ms: 1000
+
+  # Source configurations
+  sources:
+    web:
+      enabled: true
+      # Domains to never fetch
+      blocked_domains: []
+      # Domains to prefer when choosing threads
+      preferred_domains: []
+      # Respect robots.txt
+      respect_robots: true
+
+  # Interestingness evaluation
+  interestingness:
+    # Weights for each dimension (should sum to 1.0)
+    weights:
+      novelty: 0.30
+      connection_potential: 0.25
+      explanatory_power: 0.20
+      contradiction: 0.15
+      generativity: 0.10
+    # Minimum score to follow a thread
+    follow_threshold: 0.4
+    # Minimum score to create a discovery
+    discovery_threshold: 0.6
+
+  # Thread pool management
+  threads:
+    # Maximum open threads to maintain
+    max_open: 50
+    # Days before a thread decays
+    decay_days: 14
+    # Chance to revisit old thread vs new
+    revisit_probability: 0.1
+
+  # Reporting
+  reporting:
+    # Generate daily digest
+    daily_digest: true
+    # Time to send digest (HH:MM)
+    digest_time: "09:00"
+    # Alert on high-significance discoveries
+    breakthrough_alerts: true
+    # Significance threshold for alerts
+    breakthrough_threshold: 0.8
+    # Channel to send reports (null = console only)
+    channel: null
+
+  # Data storage directory
+  data_dir: "data"
+
+  # Logging
+  logging:
+    # Log level: debug, info, warn, error
+    level: "info"

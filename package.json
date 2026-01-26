@@ -1,0 +1,49 @@
+{
+  "name": "curiosity-engine",
+  "version": "0.1.0",
+  "description": "An autonomous exploration system that discovers what it didn't know it was looking for",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "curiosity": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "server": "node dist/server/index.js",
+    "server:dev": "tsc && node dist/server/index.js",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "ai",
+    "exploration",
+    "curiosity",
+    "discovery",
+    "clawdbot"
+  ],
+  "author": "Katie a Clawdbot",
+  "license": "MIT",
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsdom": "^25.0.0",
+    "ws": "^8.19.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsdom": "^21.1.0",
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

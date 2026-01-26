@@ -1,0 +1,19 @@
+[Unit]
+Description=Curiosity Engine - Autonomous Exploration System
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/curiosity-engine
+ExecStart=/usr/bin/node dist/server/index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/curiosity-engine/server.log
+StandardError=append:/var/log/curiosity-engine/error.log
+Environment=NODE_ENV=production
+Environment=PORT=3334
+EnvironmentFile=/var/www/curiosity-engine/.env.production
+
+[Install]
+WantedBy=multi-user.target

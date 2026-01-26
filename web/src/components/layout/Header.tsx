@@ -1,7 +1,8 @@
-import { Search, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Sparkles, Loader2, LogOut } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useUIStore, type ViewMode } from '../../store/ui';
+import { useAuthStore } from '../../store/auth';
 import { useStartExploration, useExplorationStatus } from '../../api/explore';
 
 const tabs: { id: ViewMode; label: string }[] = [
@@ -13,6 +14,7 @@ const tabs: { id: ViewMode; label: string }[] = [
 
 export function Header() {
   const { viewMode, setViewMode, searchQuery, setSearchQuery } = useUIStore();
+  const { user, logout } = useAuthStore();
   const { data: explorationStatus } = useExplorationStatus();
   const startExploration = useStartExploration();
 
@@ -76,6 +78,17 @@ export function Header() {
           </>
         )}
       </Button>
+
+      <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border">
+        <span className="text-xs text-muted font-mono">{user?.email}</span>
+        <button
+          onClick={logout}
+          className="p-2 text-muted hover:text-text transition-colors"
+          title="Logout"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
     </header>
   );
 }

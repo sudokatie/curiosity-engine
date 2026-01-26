@@ -34,3 +34,5 @@ data/sessions/*
 
 # Coverage
 coverage/
+.env.production
+web/.env.production

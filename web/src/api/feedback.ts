@@ -2,7 +2,7 @@
  * Feedback API
  */
 
-const API_BASE = import.meta.env.PROD ? '/api' : 'http://localhost:3333/api';
+import { api } from './client';
 
 export interface FeedbackSubmission {
   type: 'bug' | 'feature' | 'other';
@@ -16,18 +16,5 @@ export interface FeedbackResponse {
 }
 
 export async function submitFeedback(feedback: FeedbackSubmission): Promise<FeedbackResponse> {
-  const res = await fetch(`${API_BASE}/feedback`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(feedback),
-  });
-
-  const data = await res.json();
-  
-  if (!res.ok) {
-    throw new Error(data.error || 'Failed to submit feedback');
-  }
-
-  return data;
+  return api.post<FeedbackResponse>('/api/feedback', feedback);
 }

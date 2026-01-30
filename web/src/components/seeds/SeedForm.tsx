@@ -25,38 +25,49 @@ export function SeedForm({ onClose }: SeedFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-panel border border-border rounded-lg w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-panel border border-border w-full max-w-md mx-4">
+        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="font-medium text-text">Add Seed</h2>
+          <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+            Add Seed
+          </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-panel-strong text-muted hover:text-text"
+            className="p-1.5 text-muted hover:text-accent transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm text-muted mb-1">Content</label>
+            <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+              Content
+            </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter a topic, question, or URL..."
               className="
-                w-full bg-bg border border-border rounded px-3 py-2 text-text
-                placeholder-muted min-h-[100px] resize-none
-                focus:outline-none focus:border-accent
+                w-full bg-bg border border-border px-3 py-2.5 text-text
+                placeholder-muted-olive min-h-[120px] resize-none
+                focus:outline-none focus:border-text-cream transition-colors
               "
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm text-muted mb-1">
-              Priority: {priority.toFixed(1)}
-            </label>
+            <div className="flex justify-between mb-2">
+              <label className="text-xs text-muted-olive uppercase tracking-wider">
+                Priority
+              </label>
+              <span className="text-sm font-mono text-text-cream">
+                {priority.toFixed(1)}
+              </span>
+            </div>
             <input
               type="range"
               min="0"
@@ -64,11 +75,17 @@ export function SeedForm({ onClose }: SeedFormProps) {
               step="0.1"
               value={priority}
               onChange={(e) => setPriority(parseFloat(e.target.value))}
-              className="w-full"
+              className="w-full accent-accent"
             />
+            <div className="flex justify-between mt-1 text-xs text-muted-olive">
+              <span>Low</span>
+              <span>High</span>
+            </div>
           </div>
 
-          <div className="flex gap-2 justify-end pt-2">
+          <div className="dotted-separator" />
+
+          <div className="flex gap-2 justify-end">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>

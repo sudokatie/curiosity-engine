@@ -10,14 +10,15 @@ interface GraphNodeProps {
   onDragEnd: () => void;
 }
 
+// Dispatch-inspired colors
 const typeColors = {
-  seed: '#3b82f6',
-  thread: '#737373',
-  discovery: '#eab308',
+  seed: '#e85a3c',      // coral accent
+  thread: '#6b6b5a',    // muted olive
+  discovery: '#e8d5a8', // cream
 };
 
 const typeShapes = {
-  seed: 'rect',
+  seed: 'diamond',      // diamond for seeds (like Dispatch logo)
   thread: 'circle',
   discovery: 'star',
 } as const;
@@ -79,26 +80,27 @@ export function GraphNode({
       onMouseDown={handleMouseDown}
       className="cursor-pointer"
     >
-      {/* Selection ring */}
+      {/* Selection ring - dotted style */}
       {isSelected && (
         <circle
-          r={size + 6}
+          r={size + 8}
           fill="none"
           stroke={color}
           strokeWidth={2}
-          opacity={0.6}
+          strokeDasharray="4 2"
+          opacity={0.8}
         />
       )}
 
       {/* Node shape */}
-      {shape === 'rect' && (
+      {shape === 'diamond' && (
         <rect
           x={-size}
           y={-size}
           width={size * 2}
           height={size * 2}
           fill={color}
-          rx={2}
+          transform="rotate(45)"
         />
       )}
       {shape === 'circle' && (
@@ -111,16 +113,17 @@ export function GraphNode({
         />
       )}
 
-      {/* Label */}
+      {/* Label - monospace style */}
       <text
-        y={size + 14}
+        y={size + 16}
         textAnchor="middle"
         fill="#fafafa"
         fontSize={10}
+        fontFamily="JetBrains Mono, monospace"
         className="pointer-events-none select-none"
       >
-        {node.label.slice(0, 20)}
-        {node.label.length > 20 ? '...' : ''}
+        {node.label.slice(0, 18)}
+        {node.label.length > 18 ? '...' : ''}
       </text>
     </g>
   );

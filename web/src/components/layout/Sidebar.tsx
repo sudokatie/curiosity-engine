@@ -12,9 +12,10 @@ export function Sidebar() {
   const hasSelection = selectedNodeId && selectedNodeType;
 
   return (
-    <aside className="w-80 bg-panel border-l border-border flex flex-col h-full">
+    <aside className="w-80 bg-panel flex flex-col h-full">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="font-medium text-text">
+        <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
           {hasSelection ? 'Details' : 'Select a node'}
         </h2>
         <button
@@ -22,16 +23,20 @@ export function Sidebar() {
             clearSelection();
             setSidebarOpen(false);
           }}
-          className="p-1 rounded hover:bg-panel-strong text-muted hover:text-text transition-colors"
+          className="p-1.5 text-muted hover:text-accent transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
+      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {!hasSelection && (
-          <div className="p-4 text-muted text-sm">
-            Click on a node in the graph to see its details.
+          <div className="p-4">
+            <p className="text-sm text-muted">
+              Click on a node in the graph to see its details.
+            </p>
+            <div className="mt-4 dotted-separator" />
           </div>
         )}
 
@@ -46,6 +51,13 @@ export function Sidebar() {
         {selectedNodeType === 'discovery' && selectedNodeId && (
           <DiscoveryDetail id={selectedNodeId} />
         )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-3 border-t border-border bg-bg-deep">
+        <p className="text-xs text-muted-olive font-mono">
+          blackabee.com
+        </p>
       </div>
     </aside>
   );

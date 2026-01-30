@@ -22,11 +22,11 @@ export function DiscoveryDetail({ id }: DiscoveryDetailProps) {
   const createSeed = useCreateSeed();
 
   if (isLoading) {
-    return <div className="p-4 text-muted">Loading...</div>;
+    return <div className="p-4 text-muted font-mono text-sm">Loading...</div>;
   }
 
   if (error || !discovery) {
-    return <div className="p-4 text-danger">Failed to load discovery</div>;
+    return <div className="p-4 text-danger font-mono text-sm">Failed to load discovery</div>;
   }
 
   const handleCreateSeed = () => {
@@ -54,33 +54,43 @@ export function DiscoveryDetail({ id }: DiscoveryDetailProps) {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <Badge variant={getSignificanceVariant(discovery.significance)}>
             <Star className="w-3 h-3 mr-1" />
             {(discovery.significance * 100).toFixed(0)}%
           </Badge>
         </div>
-        <h3 className="text-text font-medium text-lg">{discovery.title}</h3>
+        <h3 className="font-serif text-text-cream text-lg leading-tight">
+          {discovery.title}
+        </h3>
       </div>
 
+      <div className="dotted-separator" />
+
+      {/* Seed path */}
       {discovery.seed_path && discovery.seed_path.length > 0 && (
-        <div className="text-xs text-muted">
-          Path: {discovery.seed_path.join(' → ')}
+        <div className="text-xs text-muted-olive font-mono">
+          Path: {discovery.seed_path.join(' -> ')}
         </div>
       )}
 
+      {/* Content */}
       <div className="text-sm text-text leading-relaxed whitespace-pre-wrap">
         {discovery.content}
       </div>
 
+      {/* Questions */}
       {discovery.questions && discovery.questions.length > 0 && (
-        <div>
-          <h4 className="text-sm text-muted mb-2">Questions opened</h4>
-          <ul className="space-y-1">
+        <div className="bg-bg-deep p-3 border border-border">
+          <h4 className="text-xs text-muted-olive uppercase tracking-wider mb-2">
+            Questions opened
+          </h4>
+          <ul className="space-y-2">
             {discovery.questions.map((q, i) => (
               <li key={i} className="text-sm text-text flex items-start gap-2">
-                <span className="text-accent">?</span>
+                <span className="text-accent font-mono">?</span>
                 {q}
               </li>
             ))}
@@ -88,11 +98,15 @@ export function DiscoveryDetail({ id }: DiscoveryDetailProps) {
         </div>
       )}
 
-      <div className="text-xs text-muted">
+      {/* Timestamp */}
+      <div className="text-xs text-muted-olive font-mono">
         {new Date(discovery.created_at).toLocaleString()}
       </div>
 
-      <div className="flex gap-2 pt-2 border-t border-border">
+      <div className="dotted-separator" />
+
+      {/* Actions */}
+      <div className="flex gap-2">
         <Button
           variant="secondary"
           onClick={handleCreateSeed}
@@ -107,11 +121,15 @@ export function DiscoveryDetail({ id }: DiscoveryDetailProps) {
         </Button>
       </div>
 
-      <div className="flex gap-2 pt-2 border-t border-border items-center">
-        <span className="text-sm text-muted mr-2">Was this useful?</span>
+      {/* Feedback */}
+      <div className="flex gap-2 items-center">
+        <span className="text-xs text-muted-olive uppercase tracking-wider">
+          Useful?
+        </span>
+        <div className="dotted-separator-v h-4 mx-2" />
         <Button
-          variant={feedback?.rating === 'up' ? 'primary' : 'ghost'}
-          size="md"
+          variant={feedback?.rating === 'up' ? 'accent' : 'ghost'}
+          size="sm"
           onClick={handleThumbsUp}
           disabled={setFeedback.isPending}
         >
@@ -119,7 +137,7 @@ export function DiscoveryDetail({ id }: DiscoveryDetailProps) {
         </Button>
         <Button
           variant={feedback?.rating === 'down' ? 'danger' : 'ghost'}
-          size="md"
+          size="sm"
           onClick={handleThumbsDown}
           disabled={setFeedback.isPending}
         >

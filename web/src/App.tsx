@@ -39,10 +39,19 @@ function MainContent() {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="text-center font-mono">
-        <div className="text-xl tracking-wider">CURIOSITY ENGINE</div>
-        <div className="text-gray-500 text-sm mt-2">Loading...</div>
+    <div className="min-h-screen bg-bg text-text flex items-center justify-center">
+      <div className="text-center">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-8 h-8 border-2 border-text-cream rotate-45 flex items-center justify-center">
+            <div className="w-3 h-3 bg-text-cream rotate-45" />
+          </div>
+        </div>
+        <h1 className="font-serif text-2xl text-text-cream tracking-wide">
+          Curiosity Engine
+        </h1>
+        <div className="dotted-separator w-32 mx-auto mt-4 mb-4" />
+        <div className="text-muted-olive text-sm font-mono">Loading...</div>
       </div>
     </div>
   );

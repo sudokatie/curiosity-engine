@@ -35,27 +35,39 @@ export function DiscoveryGrid() {
   });
 
   if (isLoading) {
-    return <div className="p-8 text-muted">Loading discoveries...</div>;
+    return (
+      <div className="p-8 text-muted font-mono text-sm">
+        Loading discoveries...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-8 text-danger">Failed to load discoveries</div>;
+    return (
+      <div className="p-8 text-danger font-mono text-sm">
+        Failed to load discoveries
+      </div>
+    );
   }
 
   return (
     <div className="h-full flex flex-col">
+      {/* Filter bar */}
       <div className="p-4 border-b border-border flex items-center gap-4">
-        <span className="text-sm text-muted">Min significance:</span>
-        <div className="flex gap-2">
+        <span className="text-xs text-muted-olive uppercase tracking-wider">
+          Min significance
+        </span>
+        <div className="dotted-separator-v h-4" />
+        <div className="flex gap-1">
           {significanceFilters.map((filter) => (
             <button
               key={filter.value}
               onClick={() => setMinSignificance(filter.value)}
               className={`
-                px-3 py-1 rounded text-sm transition-colors
+                px-3 py-1 text-sm transition-colors
                 ${minSignificance === filter.value
-                  ? 'bg-accent text-white'
-                  : 'text-muted hover:text-text hover:bg-panel'
+                  ? 'bg-text-cream text-bg'
+                  : 'text-muted hover:text-text'
                 }
               `}
             >
@@ -63,34 +75,66 @@ export function DiscoveryGrid() {
             </button>
           ))}
         </div>
+        
+        {/* Stats */}
+        <div className="ml-auto flex items-center gap-6">
+          <div className="text-right">
+            <div className="stat-number text-2xl">{filteredDiscoveries?.length || 0}</div>
+            <div className="stat-label">Discoveries</div>
+          </div>
+        </div>
       </div>
 
+      {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {!filteredDiscoveries?.length ? (
-          <div className="text-center text-muted py-8">
-            {searchQuery ? 'No discoveries match your search.' : 'No discoveries yet. Start exploring to find something interesting.'}
+          <div className="text-center py-12">
+            <p className="text-muted font-serif text-lg">
+              {searchQuery 
+                ? 'No discoveries match your search.' 
+                : 'No discoveries yet.'}
+            </p>
+            <p className="text-muted-olive text-sm mt-2">
+              {!searchQuery && 'Start exploring to find something interesting.'}
+            </p>
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredDiscoveries.map((discovery) => (
+            {filteredDiscoveries.map((discovery, index) => (
               <button
                 key={discovery.id}
                 onClick={() => selectNode(discovery.id, 'discovery')}
                 className="
-                  bg-panel border border-border rounded-lg p-4 text-left
-                  hover:border-discovery transition-colors
+                  bg-panel border border-border p-4 text-left
+                  hover:border-text-cream transition-colors group
                 "
               >
-                <div className="flex items-center gap-2 mb-2">
+                {/* Number and badge */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-mono text-xs text-muted-olive">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
                   <Badge variant={getSignificanceVariant(discovery.significance)}>
                     <Star className="w-3 h-3 mr-1" />
                     {(discovery.significance * 100).toFixed(0)}%
                   </Badge>
                 </div>
-                <h3 className="text-text font-medium mb-2">{discovery.title}</h3>
-                <p className="text-sm text-muted line-clamp-3">{discovery.content}</p>
-                <div className="mt-3 text-xs text-muted">
-                  {new Date(discovery.created_at).toLocaleDateString()}
+                
+                {/* Title */}
+                <h3 className="font-serif text-text-cream text-lg mb-2 group-hover:text-white transition-colors">
+                  {discovery.title}
+                </h3>
+                
+                {/* Content preview */}
+                <p className="text-sm text-muted line-clamp-3">
+                  {discovery.content}
+                </p>
+                
+                {/* Footer */}
+                <div className="mt-4 pt-3 border-t border-border">
+                  <span className="text-xs text-muted-olive font-mono">
+                    {new Date(discovery.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </button>
             ))}

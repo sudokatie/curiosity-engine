@@ -110,22 +110,35 @@ export function KnowledgeGraph() {
   const showGraph = !isLoading && !error && nodes.length > 0;
 
   return (
-    <div ref={containerRef} className="h-full relative overflow-hidden">
+    <div ref={containerRef} className="h-full relative overflow-hidden bg-bg-deep">
+      {/* Grid pattern background */}
+      <div 
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #3a3a3a 1px, transparent 1px),
+            linear-gradient(to bottom, #3a3a3a 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px',
+        }}
+      />
+
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center text-muted z-10">
-          Loading graph...
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <div className="font-mono text-sm text-muted">Loading graph...</div>
         </div>
       )}
       
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center text-danger z-10">
-          Failed to load graph
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <div className="font-mono text-sm text-danger">Failed to load graph</div>
         </div>
       )}
       
       {!isLoading && !error && !filteredData?.nodes?.length && (
-        <div className="absolute inset-0 flex items-center justify-center text-muted z-10">
-          No data yet. Add a seed to get started.
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <div className="font-serif text-xl text-text-cream mb-2">No data yet</div>
+          <div className="text-sm text-muted">Add a seed to get started.</div>
         </div>
       )}
 
@@ -137,10 +150,10 @@ export function KnowledgeGraph() {
             height={dimensions.height}
             onMouseDown={handleMouseDown}
             onWheel={handleWheel}
-            className="cursor-grab active:cursor-grabbing"
+            className="cursor-grab active:cursor-grabbing relative z-10"
           >
             <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-              {/* Edges */}
+              {/* Edges - dotted style */}
               {edges.map((edge) => {
                 const source = typeof edge.source === 'string' 
                   ? nodes.find((n) => n.id === edge.source) 
@@ -158,9 +171,10 @@ export function KnowledgeGraph() {
                     y1={source.y}
                     x2={target.x}
                     y2={target.y}
-                    stroke="#404040"
+                    stroke="#3a3a3a"
                     strokeWidth={1}
-                    opacity={0.6}
+                    strokeDasharray="4 4"
+                    opacity={0.8}
                   />
                 );
               })}
@@ -185,6 +199,20 @@ export function KnowledgeGraph() {
             onZoomOut={() => setTransform((t) => ({ ...t, scale: Math.max(t.scale * 0.8, 0.1) }))}
             onFit={handleFit}
           />
+
+          {/* Stats overlay */}
+          <div className="absolute top-4 left-4 bg-panel/90 border border-border px-3 py-2 z-20">
+            <div className="flex gap-6 text-xs">
+              <div>
+                <span className="text-muted-olive uppercase tracking-wider">Nodes</span>
+                <span className="ml-2 font-mono text-text-cream">{nodes.length}</span>
+              </div>
+              <div>
+                <span className="text-muted-olive uppercase tracking-wider">Edges</span>
+                <span className="ml-2 font-mono text-text-cream">{edges.length}</span>
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>

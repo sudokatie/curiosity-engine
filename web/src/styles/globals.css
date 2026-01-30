@@ -1,13 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #fafafa;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -26,50 +28,124 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Scrollbar - minimal and technical */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #141414;
+  background: #1a1a1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #404040;
-  border-radius: 4px;
+  background: #3a3a3a;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #525252;
+  background: #4a4a4a;
+}
+
+/* Dotted separator utility */
+.dotted-separator {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #3a3a3a,
+    #3a3a3a 2px,
+    transparent 2px,
+    transparent 8px
+  );
+  height: 1px;
+}
+
+.dotted-separator-v {
+  background-image: repeating-linear-gradient(
+    0deg,
+    #3a3a3a,
+    #3a3a3a 2px,
+    transparent 2px,
+    transparent 8px
+  );
+  width: 1px;
+}
+
+/* Scan line overlay for accent panels */
+.scan-lines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(232, 90, 60, 0.05) 2px,
+    rgba(232, 90, 60, 0.05) 4px
+  );
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg;
+    @apply px-4 py-2 font-medium transition-colors focus:outline-none;
+    @apply focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg;
   }
   
   .btn-primary {
-    @apply bg-accent text-white hover:bg-accent-hover;
+    @apply bg-text-cream text-bg hover:bg-white rounded-md;
   }
   
   .btn-secondary {
-    @apply bg-panel border border-border text-text hover:bg-panel-strong;
+    @apply bg-panel border border-border text-text hover:bg-panel-strong rounded-sm;
   }
   
   .btn-ghost {
-    @apply bg-transparent text-muted hover:text-text hover:bg-panel;
+    @apply bg-transparent text-muted hover:text-text hover:bg-panel rounded-sm;
   }
   
   .btn-danger {
-    @apply bg-danger text-white hover:bg-red-600;
+    @apply bg-danger text-white hover:bg-red-600 rounded-sm;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-white hover:bg-accent-hover rounded-sm;
   }
   
   .card {
-    @apply bg-panel border border-border rounded-lg;
+    @apply bg-panel border border-border;
   }
   
   .input {
-    @apply bg-bg border border-border rounded px-3 py-2 text-text placeholder-muted focus:outline-none focus:border-accent;
+    @apply bg-bg border border-border px-3 py-2 text-text placeholder-muted-olive;
+    @apply focus:outline-none focus:border-text-cream;
+  }
+  
+  /* Numbered navigation item */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2 text-sm transition-colors;
+    @apply text-muted hover:text-text;
+  }
+  
+  .nav-item-active {
+    @apply text-text-cream;
+  }
+  
+  .nav-number {
+    @apply font-mono text-xs text-muted-olive;
+  }
+  
+  /* Section header - all caps, muted */
+  .section-header {
+    @apply text-xs font-medium tracking-wider text-muted-olive uppercase;
+  }
+  
+  /* Large display text - serif style */
+  .display-text {
+    @apply font-serif text-text-cream;
+  }
+  
+  /* Stat number - large and confident */
+  .stat-number {
+    @apply font-serif text-3xl text-text-cream tabular-nums;
+  }
+  
+  .stat-label {
+    @apply text-xs text-muted-olive uppercase tracking-wider mt-1;
   }
 }

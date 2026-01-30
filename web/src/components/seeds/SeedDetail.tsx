@@ -20,11 +20,11 @@ export function SeedDetail({ id }: SeedDetailProps) {
   const startExploration = useStartExploration();
 
   if (isLoading) {
-    return <div className="p-4 text-muted">Loading...</div>;
+    return <div className="p-4 text-muted font-mono text-sm">Loading...</div>;
   }
 
   if (error || !seed) {
-    return <div className="p-4 text-danger">Failed to load seed</div>;
+    return <div className="p-4 text-danger font-mono text-sm">Failed to load seed</div>;
   }
 
   const handleExplore = () => {
@@ -37,39 +37,50 @@ export function SeedDetail({ id }: SeedDetailProps) {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <Badge variant={statusVariant[seed.status]}>{seed.status}</Badge>
         </div>
         <p className="text-text">{seed.content}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-muted">Priority</span>
-          <p className="text-text font-mono">{seed.priority.toFixed(1)}</p>
+      <div className="dotted-separator" />
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-bg-deep p-3 border border-border">
+          <div className="stat-number text-xl">{seed.priority.toFixed(1)}</div>
+          <div className="stat-label">Priority</div>
         </div>
-        <div>
-          <span className="text-muted">Explored</span>
-          <p className="text-text font-mono">{seed.times_explored}x</p>
+        <div className="bg-bg-deep p-3 border border-border">
+          <div className="stat-number text-xl">{seed.times_explored}</div>
+          <div className="stat-label">Explored</div>
         </div>
-        <div className="col-span-2">
-          <span className="text-muted">Created</span>
-          <p className="text-text text-xs font-mono">
+      </div>
+
+      {/* Timestamps */}
+      <div className="space-y-2 text-xs font-mono">
+        <div className="flex justify-between">
+          <span className="text-muted-olive uppercase tracking-wider">Created</span>
+          <span className="text-muted">
             {new Date(seed.created_at).toLocaleString()}
-          </p>
+          </span>
         </div>
         {seed.last_explored_at && (
-          <div className="col-span-2">
-            <span className="text-muted">Last explored</span>
-            <p className="text-text text-xs font-mono">
+          <div className="flex justify-between">
+            <span className="text-muted-olive uppercase tracking-wider">Last explored</span>
+            <span className="text-muted">
               {new Date(seed.last_explored_at).toLocaleString()}
-            </p>
+            </span>
           </div>
         )}
       </div>
 
-      <div className="flex gap-2 pt-2 border-t border-border">
+      <div className="dotted-separator" />
+
+      {/* Actions */}
+      <div className="flex gap-2">
         <Button
           onClick={handleExplore}
           disabled={startExploration.isPending}

@@ -9,20 +9,20 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-panel-strong text-text',
-  accent: 'bg-accent/20 text-accent',
-  discovery: 'bg-discovery/20 text-discovery',
-  ok: 'bg-ok/20 text-ok',
-  warn: 'bg-warn/20 text-warn',
-  danger: 'bg-danger/20 text-danger',
-  muted: 'bg-border text-muted',
+  default: 'bg-panel-strong text-text border border-border',
+  accent: 'bg-accent-muted text-accent border border-accent/30',
+  discovery: 'bg-text-cream/10 text-text-cream border border-text-cream/30',
+  ok: 'bg-ok/10 text-ok border border-ok/30',
+  warn: 'bg-warn/10 text-warn border border-warn/30',
+  danger: 'bg-danger/10 text-danger border border-danger/30',
+  muted: 'bg-bg text-muted border border-border',
 };
 
 export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
   return (
     <span
       className={`
-        inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+        inline-flex items-center px-2 py-0.5 text-xs font-medium uppercase tracking-wider
         ${variantStyles[variant]}
         ${className}
       `}

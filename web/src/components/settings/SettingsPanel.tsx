@@ -87,14 +87,14 @@ export function SettingsPanel() {
     return (
       <div className="h-full flex items-center justify-center text-muted">
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Loading settings...
+        <span className="font-mono text-sm">Loading settings...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center text-danger">
+      <div className="h-full flex items-center justify-center text-danger font-mono text-sm">
         Failed to load settings
       </div>
     );
@@ -103,33 +103,48 @@ export function SettingsPanel() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text">Settings</h1>
+          <div>
+            <span className="font-mono text-xs text-muted-olive">04</span>
+            <h1 className="font-serif text-2xl text-text-cream">Settings</h1>
+          </div>
           {hasChanges && (
-            <span className="text-sm text-warn">Unsaved changes</span>
+            <span className="text-xs text-warn uppercase tracking-wider">
+              Unsaved changes
+            </span>
           )}
         </div>
 
+        <div className="dotted-separator" />
+
+        {/* Exploration */}
         <Card>
           <CardHeader>
-            <h2 className="font-medium text-text">Exploration</h2>
+            <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+              Exploration
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm text-muted mb-1">Max Depth</label>
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Max Depth
+              </label>
               <input
                 type="number"
                 value={maxDepth}
                 onChange={(e) => { setMaxDepth(parseInt(e.target.value) || 1); markChanged(); }}
                 min={1}
                 max={10}
-                className="bg-bg border border-border rounded px-3 py-2 w-24 text-text"
+                className="bg-bg border border-border px-3 py-2 w-24 text-text font-mono focus:border-text-cream focus:outline-none transition-colors"
               />
-              <p className="text-xs text-muted mt-1">How deep to follow threads (1-10)</p>
+              <p className="text-xs text-muted mt-2">How deep to follow threads (1-10)</p>
             </div>
 
             <div>
-              <label className="block text-sm text-muted mb-1">Fetch Delay (ms)</label>
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Fetch Delay (ms)
+              </label>
               <input
                 type="number"
                 value={fetchDelay}
@@ -137,22 +152,30 @@ export function SettingsPanel() {
                 min={500}
                 max={5000}
                 step={100}
-                className="bg-bg border border-border rounded px-3 py-2 w-24 text-text"
+                className="bg-bg border border-border px-3 py-2 w-24 text-text font-mono focus:border-text-cream focus:outline-none transition-colors"
               />
-              <p className="text-xs text-muted mt-1">Delay between requests (500-5000ms)</p>
+              <p className="text-xs text-muted mt-2">Delay between requests (500-5000ms)</p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Thresholds */}
         <Card>
           <CardHeader>
-            <h2 className="font-medium text-text">Evaluation Thresholds</h2>
+            <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+              Evaluation Thresholds
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm text-muted mb-1">
-                Follow Threshold: {followThreshold.toFixed(2)}
-              </label>
+              <div className="flex justify-between mb-2">
+                <label className="text-xs text-muted-olive uppercase tracking-wider">
+                  Follow Threshold
+                </label>
+                <span className="text-sm font-mono text-text-cream">
+                  {followThreshold.toFixed(2)}
+                </span>
+              </div>
               <input
                 type="range"
                 value={followThreshold}
@@ -160,15 +183,20 @@ export function SettingsPanel() {
                 min={0}
                 max={1}
                 step={0.05}
-                className="w-full"
+                className="w-full accent-accent"
               />
-              <p className="text-xs text-muted mt-1">Minimum score to follow a thread</p>
+              <p className="text-xs text-muted mt-2">Minimum score to follow a thread</p>
             </div>
 
             <div>
-              <label className="block text-sm text-muted mb-1">
-                Discovery Threshold: {discoveryThreshold.toFixed(2)}
-              </label>
+              <div className="flex justify-between mb-2">
+                <label className="text-xs text-muted-olive uppercase tracking-wider">
+                  Discovery Threshold
+                </label>
+                <span className="text-sm font-mono text-text-cream">
+                  {discoveryThreshold.toFixed(2)}
+                </span>
+              </div>
               <input
                 type="range"
                 value={discoveryThreshold}
@@ -176,49 +204,59 @@ export function SettingsPanel() {
                 min={0}
                 max={1}
                 step={0.05}
-                className="w-full"
+                className="w-full accent-accent"
               />
-              <p className="text-xs text-muted mt-1">Minimum score to save as discovery</p>
+              <p className="text-xs text-muted mt-2">Minimum score to save as discovery</p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Thread Pool */}
         <Card>
           <CardHeader>
-            <h2 className="font-medium text-text">Thread Pool</h2>
+            <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+              Thread Pool
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm text-muted mb-1">Max Open Threads</label>
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Max Open Threads
+              </label>
               <input
                 type="number"
                 value={maxOpenThreads}
                 onChange={(e) => { setMaxOpenThreads(parseInt(e.target.value) || 10); markChanged(); }}
                 min={10}
                 max={200}
-                className="bg-bg border border-border rounded px-3 py-2 w-24 text-text"
+                className="bg-bg border border-border px-3 py-2 w-24 text-text font-mono focus:border-text-cream focus:outline-none transition-colors"
               />
-              <p className="text-xs text-muted mt-1">Maximum pending threads to keep (10-200)</p>
+              <p className="text-xs text-muted mt-2">Maximum pending threads to keep (10-200)</p>
             </div>
 
             <div>
-              <label className="block text-sm text-muted mb-1">Decay Days</label>
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Decay Days
+              </label>
               <input
                 type="number"
                 value={decayDays}
                 onChange={(e) => { setDecayDays(parseInt(e.target.value) || 1); markChanged(); }}
                 min={1}
                 max={90}
-                className="bg-bg border border-border rounded px-3 py-2 w-24 text-text"
+                className="bg-bg border border-border px-3 py-2 w-24 text-text font-mono focus:border-text-cream focus:outline-none transition-colors"
               />
-              <p className="text-xs text-muted mt-1">Days before a thread decays (1-90)</p>
+              <p className="text-xs text-muted mt-2">Days before a thread decays (1-90)</p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Blocked Domains */}
         <Card>
           <CardHeader>
-            <h2 className="font-medium text-text">Blocked Domains</h2>
+            <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+              Blocked Domains
+            </h2>
           </CardHeader>
           <CardContent>
             <textarea
@@ -226,22 +264,25 @@ export function SettingsPanel() {
               onChange={(e) => { setBlockedDomains(e.target.value); markChanged(); }}
               placeholder="One domain per line..."
               className="
-                w-full bg-bg border border-border rounded px-3 py-2 text-text
-                placeholder-muted min-h-[100px] resize-none font-mono text-sm
-                focus:outline-none focus:border-accent
+                w-full bg-bg border border-border px-3 py-2 text-text
+                placeholder-muted-olive min-h-[120px] resize-none font-mono text-sm
+                focus:outline-none focus:border-text-cream transition-colors
               "
             />
-            <p className="text-xs text-muted mt-1">Domains to skip during exploration</p>
+            <p className="text-xs text-muted mt-2">Domains to skip during exploration</p>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2 pb-6">
+        <div className="dotted-separator" />
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pb-6">
           <Button
             variant="ghost"
             onClick={handleReset}
             disabled={!hasChanges}
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
+            <RotateCcw className="w-4 h-4" />
             Reset
           </Button>
           <Button
@@ -249,9 +290,9 @@ export function SettingsPanel() {
             disabled={!hasChanges || updateConfig.isPending}
           >
             {updateConfig.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4" />
             )}
             Save Changes
           </Button>

@@ -1,5 +1,5 @@
 /**
- * Authentication Form Component
+ * Authentication Form Component - Dispatch-inspired design
  */
 
 import { useState, useEffect } from 'react';
@@ -51,131 +51,194 @@ export function AuthForm() {
   const displayError = localError || error;
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-mono font-bold tracking-wider">CURIOSITY ENGINE</h1>
-          <p className="text-gray-500 text-sm mt-2 font-mono">
-            Autonomous exploration system
-          </p>
-        </div>
-
-        {/* Status */}
-        {status && (
-          <div className="mb-6 p-3 border border-gray-800 bg-gray-900/50 font-mono text-xs">
-            <div className="flex justify-between">
-              <span className="text-gray-500">SLOTS AVAILABLE</span>
-              <span className={status.slots_available > 0 ? 'text-green-500' : 'text-red-500'}>
-                {status.slots_available} / {status.max_users}
-              </span>
+    <div className="min-h-screen bg-bg text-text flex">
+      {/* Left panel - branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-accent scan-lines flex-col justify-between p-12">
+        <div>
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-8 h-8 border-2 border-bg rotate-45 flex items-center justify-center">
+              <div className="w-3 h-3 bg-bg rotate-45" />
             </div>
           </div>
-        )}
+          
+          {/* Tagline */}
+          <h1 className="font-serif text-5xl text-bg leading-tight">
+            Discover what<br />
+            you didn't know<br />
+            you were<br />
+            looking for.
+          </h1>
+        </div>
+        
+        {/* Stats */}
+        <div className="flex gap-12">
+          <div>
+            <div className="text-4xl font-serif text-bg">
+              {status?.users_registered || 0}
+            </div>
+            <div className="text-sm text-bg/70 uppercase tracking-wider mt-1">
+              Explorers
+            </div>
+          </div>
+          <div>
+            <div className="text-4xl font-serif text-bg">
+              {status?.slots_available || 0}
+            </div>
+            <div className="text-sm text-bg/70 uppercase tracking-wider mt-1">
+              Slots Available
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-800">
-            <button
-              type="button"
-              onClick={() => { setMode('login'); clearError(); setLocalError(null); }}
-              className={`flex-1 py-2 text-sm font-mono tracking-wider ${
-                mode === 'login' 
-                  ? 'text-white border-b-2 border-white' 
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              LOGIN
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('signup'); clearError(); setLocalError(null); }}
-              className={`flex-1 py-2 text-sm font-mono tracking-wider ${
-                mode === 'signup' 
-                  ? 'text-white border-b-2 border-white' 
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-              disabled={status ? !status.accepting_signups : false}
-            >
-              SIGN UP
-            </button>
+      {/* Right panel - form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-6 h-6 border-2 border-text-cream rotate-45 flex items-center justify-center">
+                <div className="w-2 h-2 bg-text-cream rotate-45" />
+              </div>
+            </div>
+            <h1 className="font-serif text-2xl text-text-cream">
+              Curiosity Engine
+            </h1>
+            <p className="text-muted-olive text-sm mt-2">
+              Autonomous exploration system
+            </p>
           </div>
 
-          {/* Error */}
-          {displayError && (
-            <div className="p-3 border border-red-900 bg-red-900/20 text-red-400 text-sm font-mono">
-              {displayError}
+          {/* Desktop header */}
+          <div className="hidden lg:block mb-8">
+            <h2 className="font-serif text-3xl text-text-cream mb-2">
+              {mode === 'login' ? 'Welcome back' : 'Join the exploration'}
+            </h2>
+            <p className="text-muted">
+              {mode === 'login' 
+                ? 'Enter your credentials to continue'
+                : 'Create an account to start discovering'
+              }
+            </p>
+          </div>
+
+          {/* Status indicator (mobile) */}
+          {status && (
+            <div className="lg:hidden mb-6 p-4 border border-border bg-panel">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-olive uppercase tracking-wider">Slots</span>
+                <span className={status.slots_available > 0 ? 'text-ok' : 'text-danger'}>
+                  {status.slots_available} / {status.max_users}
+                </span>
+              </div>
             </div>
           )}
 
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-mono text-gray-500 mb-1 tracking-wider">
-              EMAIL
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-black border border-gray-800 p-3 font-mono text-sm focus:border-white focus:outline-none"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Tabs */}
+            <div className="flex border-b border-border">
+              <button
+                type="button"
+                onClick={() => { setMode('login'); clearError(); setLocalError(null); }}
+                className={`flex-1 py-3 text-sm uppercase tracking-wider transition-colors ${
+                  mode === 'login' 
+                    ? 'text-text-cream border-b-2 border-text-cream -mb-px' 
+                    : 'text-muted hover:text-text'
+                }`}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('signup'); clearError(); setLocalError(null); }}
+                className={`flex-1 py-3 text-sm uppercase tracking-wider transition-colors ${
+                  mode === 'signup' 
+                    ? 'text-text-cream border-b-2 border-text-cream -mb-px' 
+                    : 'text-muted hover:text-text'
+                }`}
+                disabled={status ? !status.accepting_signups : false}
+              >
+                Sign Up
+              </button>
+            </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-mono text-gray-500 mb-1 tracking-wider">
-              PASSWORD
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-black border border-gray-800 p-3 font-mono text-sm focus:border-white focus:outline-none"
-              placeholder="••••••••"
-              required
-              minLength={8}
-            />
-          </div>
+            {/* Error */}
+            {displayError && (
+              <div className="p-4 border border-danger/30 bg-danger/10 text-danger text-sm">
+                {displayError}
+              </div>
+            )}
 
-          {/* Confirm Password (signup only) */}
-          {mode === 'signup' && (
+            {/* Email */}
             <div>
-              <label className="block text-xs font-mono text-gray-500 mb-1 tracking-wider">
-                CONFIRM PASSWORD
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-bg border border-border p-3 text-text placeholder-muted-olive focus:border-text-cream focus:outline-none transition-colors"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                Password
               </label>
               <input
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-black border border-gray-800 p-3 font-mono text-sm focus:border-white focus:outline-none"
-                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-bg border border-border p-3 text-text placeholder-muted-olive focus:border-text-cream focus:outline-none transition-colors"
+                placeholder="********"
                 required
                 minLength={8}
               />
             </div>
-          )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading || (mode === 'signup' && status !== null && !status.accepting_signups)}
-            className="w-full py-3 bg-white text-black font-mono text-sm tracking-wider hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'PROCESSING...' : mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT'}
-          </button>
-        </form>
+            {/* Confirm Password (signup only) */}
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full bg-bg border border-border p-3 text-text placeholder-muted-olive focus:border-text-cream focus:outline-none transition-colors"
+                  placeholder="********"
+                  required
+                  minLength={8}
+                />
+              </div>
+            )}
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-xs font-mono text-gray-600">
-          <p>Discover what you didn't know you were looking for.</p>
-          <p className="mt-2">
-            <a href="https://blackabee.com" className="hover:text-gray-400">
-              blackabee.com
-            </a>
-          </p>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading || (mode === 'signup' && status !== null && !status.accepting_signups)}
+              className="w-full py-4 bg-text-cream text-bg text-sm uppercase tracking-wider font-medium hover:bg-white disabled:bg-border disabled:text-muted disabled:cursor-not-allowed transition-colors rounded-md"
+            >
+              {isLoading ? 'Processing...' : mode === 'login' ? 'Login' : 'Create Account'}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-12 text-center">
+            <div className="dotted-separator mb-6" />
+            <p className="text-xs text-muted-olive">
+              <a href="https://blackabee.com" className="hover:text-text-cream transition-colors">
+                blackabee.com
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

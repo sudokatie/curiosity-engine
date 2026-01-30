@@ -13,11 +13,17 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="h-full flex flex-col bg-bg">
       <Header />
+      <div className="dotted-separator" />
       <div className="flex-1 flex overflow-hidden">
         <main className="flex-1 overflow-hidden">
           {children}
         </main>
-        {sidebarOpen && <Sidebar />}
+        {sidebarOpen && (
+          <>
+            <div className="dotted-separator-v" />
+            <Sidebar />
+          </>
+        )}
       </div>
     </div>
   );

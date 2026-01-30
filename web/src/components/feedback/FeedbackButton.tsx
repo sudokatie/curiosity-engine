@@ -1,8 +1,9 @@
 /**
- * Feedback Button and Modal
+ * Feedback Button and Modal - Dispatch-inspired design
  */
 
 import { useState } from 'react';
+import { X, MessageSquare } from 'lucide-react';
 import { submitFeedback } from '../../api/feedback';
 
 type FeedbackType = 'bug' | 'feature' | 'other';
@@ -51,12 +52,10 @@ export function FeedbackButton() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors z-40"
+        className="fixed bottom-4 left-4 w-10 h-10 bg-panel hover:bg-panel-strong border border-border hover:border-text-cream flex items-center justify-center text-muted hover:text-text-cream transition-all z-40"
         title="Send Feedback"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
+        <MessageSquare className="w-4 h-4" />
       </button>
 
       {/* Modal */}
@@ -69,18 +68,18 @@ export function FeedbackButton() {
           />
 
           {/* Modal Content */}
-          <div className="relative w-full max-w-md bg-gray-900 border border-gray-800 rounded-lg shadow-xl">
+          <div className="relative w-full max-w-md bg-panel border border-border">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-800">
-              <h2 className="font-mono text-sm tracking-wider">SEND FEEDBACK</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-xs font-medium text-muted-olive uppercase tracking-wider">
+                Send Feedback
+              </h2>
               <button
                 onClick={handleClose}
-                className="text-gray-500 hover:text-white"
+                className="p-1.5 text-muted hover:text-accent transition-colors"
                 disabled={isSubmitting}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -88,24 +87,26 @@ export function FeedbackButton() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               {success ? (
                 <div className="text-center py-8">
-                  <div className="text-green-500 text-lg mb-2">Feedback sent!</div>
-                  <p className="text-gray-500 text-sm">Thanks for helping improve Curiosity Engine.</p>
+                  <div className="font-serif text-xl text-ok mb-2">Feedback sent!</div>
+                  <p className="text-muted text-sm">Thanks for helping improve Curiosity Engine.</p>
                 </div>
               ) : (
                 <>
                   {/* Type Selection */}
                   <div>
-                    <label className="block text-xs text-gray-500 font-mono mb-2">TYPE</label>
+                    <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                      Type
+                    </label>
                     <div className="flex gap-2">
                       {(['bug', 'feature', 'other'] as FeedbackType[]).map((t) => (
                         <button
                           key={t}
                           type="button"
                           onClick={() => setType(t)}
-                          className={`flex-1 py-2 px-3 text-xs font-mono uppercase border ${
+                          className={`flex-1 py-2 px-3 text-xs uppercase tracking-wider border transition-colors ${
                             type === t
-                              ? 'border-white text-white bg-white/10'
-                              : 'border-gray-700 text-gray-500 hover:border-gray-600'
+                              ? 'border-text-cream text-text-cream bg-text-cream/10'
+                              : 'border-border text-muted hover:border-border-strong hover:text-text'
                           }`}
                         >
                           {t === 'bug' ? 'Bug' : t === 'feature' ? 'Feature' : 'Other'}
@@ -116,7 +117,9 @@ export function FeedbackButton() {
 
                   {/* Subject */}
                   <div>
-                    <label className="block text-xs text-gray-500 font-mono mb-2">SUBJECT</label>
+                    <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                      Subject
+                    </label>
                     <input
                       type="text"
                       value={subject}
@@ -124,13 +127,15 @@ export function FeedbackButton() {
                       placeholder="Brief description..."
                       maxLength={200}
                       required
-                      className="w-full bg-black border border-gray-800 px-3 py-2 text-sm font-mono placeholder-gray-600 focus:border-gray-600 focus:outline-none"
+                      className="w-full bg-bg border border-border px-3 py-2.5 text-text placeholder-muted-olive focus:border-text-cream focus:outline-none transition-colors"
                     />
                   </div>
 
                   {/* Message */}
                   <div>
-                    <label className="block text-xs text-gray-500 font-mono mb-2">MESSAGE</label>
+                    <label className="block text-xs text-muted-olive uppercase tracking-wider mb-2">
+                      Message
+                    </label>
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -138,27 +143,29 @@ export function FeedbackButton() {
                       rows={5}
                       maxLength={5000}
                       required
-                      className="w-full bg-black border border-gray-800 px-3 py-2 text-sm font-mono placeholder-gray-600 focus:border-gray-600 focus:outline-none resize-none"
+                      className="w-full bg-bg border border-border px-3 py-2.5 text-text placeholder-muted-olive focus:border-text-cream focus:outline-none resize-none transition-colors"
                     />
-                    <div className="text-right text-xs text-gray-600 mt-1">
+                    <div className="text-right text-xs text-muted-olive font-mono mt-1">
                       {message.length} / 5000
                     </div>
                   </div>
 
                   {/* Error */}
                   {error && (
-                    <div className="text-red-500 text-xs font-mono p-2 border border-red-500/30 bg-red-500/10">
+                    <div className="text-danger text-sm p-3 border border-danger/30 bg-danger/10">
                       {error}
                     </div>
                   )}
+
+                  <div className="dotted-separator" />
 
                   {/* Submit */}
                   <button
                     type="submit"
                     disabled={isSubmitting || !subject.trim() || !message.trim()}
-                    className="w-full py-2 bg-white text-black font-mono text-sm tracking-wider hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full py-3 bg-text-cream text-bg text-sm uppercase tracking-wider font-medium hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-md"
                   >
-                    {isSubmitting ? 'SENDING...' : 'SEND FEEDBACK'}
+                    {isSubmitting ? 'Sending...' : 'Send Feedback'}
                   </button>
                 </>
               )}

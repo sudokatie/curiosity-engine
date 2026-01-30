@@ -15,7 +15,13 @@ It doesn't try to answer questions. It tries to find questions worth asking.
 ## Installation
 
 ```bash
-git clone https://github.com/thehalvo/curiosity-engine
+npm install -g curiosity-engine
+```
+
+Or from source:
+
+```bash
+git clone https://github.com/katieblackabee/curiosity-engine
 cd curiosity-engine
 npm install
 npm run build

@@ -21,7 +21,7 @@ npm install -g curiosity-engine
 Or from source:
 
 ```bash
-git clone https://github.com/katieblackabee/curiosity-engine
+git clone https://github.com/sudokatie/curiosity-engine
 cd curiosity-engine
 npm install
 npm run build

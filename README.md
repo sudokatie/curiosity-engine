@@ -104,7 +104,8 @@ Key options:
 curiosity:
   exploration:
     max_depth: 5                    # How deep to follow threads
-    fetch_delay_ms: 1000            # Be nice to servers
+    fetch_delay_ms: 1000            # Per-domain rate limit (ms)
+    concurrency: 3                  # Parallel exploration threads (1-10)
     source_timeout_ms: 30000
 
   interestingness:

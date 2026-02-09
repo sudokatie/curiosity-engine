@@ -44,6 +44,10 @@ npx curiosity explore "local:~/notes/ideas.md"
 npx curiosity explore "code:~/projects/myapp"
 npx curiosity explore "code:~/projects/myapp/src/main.py"
 
+# Search academic papers (arXiv)
+npx curiosity explore "arxiv:search:transformer attention"
+npx curiosity explore "arxiv:1706.03762"  # Fetch specific paper
+
 # Manage seeds (your starting points)
 npx curiosity add-seed "How do neural networks actually learn?"
 npx curiosity list-seeds
@@ -156,6 +160,14 @@ curiosity:
       include_tests: false          # Skip test files
       max_file_size_mb: 1
 
+    academic:
+      enabled: true
+      max_results: 10               # Papers per search
+      categories:                   # Filter by arXiv categories
+        - cs.AI
+        - cs.LG
+        - cs.CL
+
   reporting:
     daily_digest: true
     digest_time: "09:00"
@@ -233,7 +245,7 @@ WS     /ws                     WebSocket for live updates
 - [x] Parallel exploration - multiple threads with per-domain rate limiting
 - [x] Local file adapter - PDFs, markdown, text files
 - [x] Code source adapter - explore codebases for patterns
-- [ ] Academic source adapter - arXiv/Semantic Scholar integration
+- [x] Academic source adapter - arXiv paper search and retrieval
 - [ ] LLM-based scoring - smarter interestingness evaluation
 
 ### v0.3 (Planned)

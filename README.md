@@ -36,6 +36,10 @@ npm run build
 npx curiosity explore "Why do we dream?"
 npx curiosity explore "https://example.com/interesting-article"
 
+# Explore local files (PDFs, markdown, text)
+npx curiosity explore "local:~/Documents/research"
+npx curiosity explore "local:~/notes/ideas.md"
+
 # Manage seeds (your starting points)
 npx curiosity add-seed "How do neural networks actually learn?"
 npx curiosity list-seeds
@@ -121,7 +125,19 @@ curiosity:
   threads:
     max_open: 50                    # How many threads to keep active
     decay_days: 14                  # Old threads lose priority
-    revisit_probability: 0.1       # Sometimes revisit old ground
+    revisit_probability: 0.1        # Sometimes revisit old ground
+
+  sources:
+    local:
+      enabled: true
+      directories:                  # Directories to scan
+        - ~/Documents/notes
+        - ~/research
+      extensions:                   # Supported file types
+        - .md
+        - .txt
+        - .pdf
+      max_file_size_mb: 10          # Skip files larger than this
 
   reporting:
     daily_digest: true
@@ -196,12 +212,12 @@ WS     /ws                     WebSocket for live updates
 ## Roadmap
 
 ### v0.2 (In Progress)
+- [x] Settings persistence - save UI preferences with validation
+- [x] Parallel exploration - multiple threads with per-domain rate limiting
+- [x] Local file adapter - PDFs, markdown, text files
 - [ ] Code source adapter - explore codebases for patterns
 - [ ] Academic source adapter - arXiv/Semantic Scholar integration
-- [ ] Local file adapter - PDFs, markdown, text files
 - [ ] LLM-based scoring - smarter interestingness evaluation
-- [ ] Parallel exploration - multiple threads at once
-- [ ] Settings persistence - save UI preferences
 
 ### v0.3 (Planned)
 - [ ] Clawdbot cron integration

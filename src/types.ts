@@ -171,8 +171,17 @@ export interface WebSourceConfig {
   respect_robots: boolean;
 }
 
+export interface LocalSourceConfig {
+  enabled: boolean;
+  directories: string[];
+  extensions: string[];
+  watch: boolean;
+  max_file_size_mb: number;
+}
+
 export interface SourcesConfig {
   web: WebSourceConfig;
+  local?: LocalSourceConfig;
 }
 
 export interface InterestingnessWeights {

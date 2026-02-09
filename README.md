@@ -40,6 +40,10 @@ npx curiosity explore "https://example.com/interesting-article"
 npx curiosity explore "local:~/Documents/research"
 npx curiosity explore "local:~/notes/ideas.md"
 
+# Explore codebases
+npx curiosity explore "code:~/projects/myapp"
+npx curiosity explore "code:~/projects/myapp/src/main.py"
+
 # Manage seeds (your starting points)
 npx curiosity add-seed "How do neural networks actually learn?"
 npx curiosity list-seeds
@@ -139,6 +143,19 @@ curiosity:
         - .pdf
       max_file_size_mb: 10          # Skip files larger than this
 
+    code:
+      enabled: true
+      directories:                  # Code directories
+        - ~/projects
+      languages:                    # Supported languages
+        - python
+        - typescript
+        - javascript
+        - rust
+        - go
+      include_tests: false          # Skip test files
+      max_file_size_mb: 1
+
   reporting:
     daily_digest: true
     digest_time: "09:00"
@@ -215,7 +232,7 @@ WS     /ws                     WebSocket for live updates
 - [x] Settings persistence - save UI preferences with validation
 - [x] Parallel exploration - multiple threads with per-domain rate limiting
 - [x] Local file adapter - PDFs, markdown, text files
-- [ ] Code source adapter - explore codebases for patterns
+- [x] Code source adapter - explore codebases for patterns
 - [ ] Academic source adapter - arXiv/Semantic Scholar integration
 - [ ] LLM-based scoring - smarter interestingness evaluation
 

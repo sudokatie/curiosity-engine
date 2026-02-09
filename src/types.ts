@@ -187,10 +187,17 @@ export interface CodeSourceConfig {
   max_file_size_mb: number;
 }
 
+export interface AcademicSourceConfig {
+  enabled: boolean;
+  max_results: number;
+  categories: string[];  // e.g., ["cs.AI", "cs.LG"]
+}
+
 export interface SourcesConfig {
   web: WebSourceConfig;
   local?: LocalSourceConfig;
   code?: CodeSourceConfig;
+  academic?: AcademicSourceConfig;
 }
 
 export interface InterestingnessWeights {

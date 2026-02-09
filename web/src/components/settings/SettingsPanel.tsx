@@ -3,6 +3,12 @@ import { Save, RotateCcw, Loader2 } from 'lucide-react';
 import { useConfig, useUpdateConfig } from '../../api/config';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Toast } from '../ui/Toast';
+
+interface ToastState {
+  message: string;
+  type: 'success' | 'error';
+} | null;
 
 export function SettingsPanel() {
   const { data: config, isLoading, error } = useConfig();
@@ -17,6 +23,7 @@ export function SettingsPanel() {
   const [decayDays, setDecayDays] = useState(14);
   const [blockedDomains, setBlockedDomains] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [toast, setToast] = useState<ToastState>(null);
 
   // Load config into form
   useEffect(() => {
@@ -64,7 +71,14 @@ export function SettingsPanel() {
         },
       },
     }, {
-      onSuccess: () => setHasChanges(false),
+      onSuccess: () => {
+        setHasChanges(false);
+        setToast({ message: 'Settings saved successfully', type: 'success' });
+      },
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : 'Failed to save settings';
+        setToast({ message, type: 'error' });
+      },
     });
   };
 
@@ -298,6 +312,15 @@ export function SettingsPanel() {
           </Button>
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

@@ -192,12 +192,23 @@ WS     /ws                     WebSocket for live updates
 - API server: REST endpoints + WebSocket
 - Web UI: Graph visualization, seed/discovery management, live exploration
 
-## Current Limitations
+## Roadmap
 
-- **Web only**: No code/academic/local file adapters yet (coming)
-- **Heuristic evaluation**: LLM-based scoring not yet integrated
-- **Single-threaded**: Parallel exploration not implemented
-- **Settings UI**: Display only, doesn't persist changes yet
+### v0.2 (In Progress)
+- [ ] Code source adapter - explore codebases for patterns
+- [ ] Academic source adapter - arXiv/Semantic Scholar integration
+- [ ] Local file adapter - PDFs, markdown, text files
+- [ ] LLM-based scoring - smarter interestingness evaluation
+- [ ] Parallel exploration - multiple threads at once
+- [ ] Settings persistence - save UI preferences
+
+### v0.3 (Planned)
+- [ ] Clawdbot cron integration
+- [ ] Channel notifications (Telegram, Discord)
+- [ ] Exploration cancellation
+- [ ] LLM seed generation from discoveries
+
+See FEATURE-BACKLOG.md in the clawd repo for detailed acceptance criteria.
 
 ## Philosophy
 

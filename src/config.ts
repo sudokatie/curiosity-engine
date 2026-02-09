@@ -26,6 +26,7 @@ const DEFAULT_CONFIG: CuriosityConfig = {
     max_breadth: 1,
     source_timeout_ms: 30000,
     fetch_delay_ms: 1000,
+    concurrency: 3,
   },
   sources: {
     web: {
@@ -154,6 +155,11 @@ function validateConfig(config: CuriosityConfig): void {
 
   if (config.exploration.max_breadth < 1) {
     throw new Error("max_breadth must be at least 1");
+  }
+
+  // Validate concurrency is reasonable
+  if (config.exploration.concurrency < 1 || config.exploration.concurrency > 10) {
+    throw new Error("concurrency must be between 1 and 10");
   }
 }
 

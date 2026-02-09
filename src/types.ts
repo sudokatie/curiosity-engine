@@ -161,6 +161,7 @@ export interface ExplorationConfig {
   max_breadth: number;
   source_timeout_ms: number;
   fetch_delay_ms: number;
+  concurrency: number;
 }
 
 export interface WebSourceConfig {

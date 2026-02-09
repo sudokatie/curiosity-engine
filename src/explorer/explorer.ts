@@ -1,5 +1,5 @@
 /**
- * Explorer - Core exploration loop
+ * Explorer - Core exploration loop with parallel processing
  */
 
 import type {
@@ -17,6 +17,7 @@ import { Journal } from "../journal/journal.js";
 import { SeedManager } from "../seeds/seed_manager.js";
 import { createDiscovery } from "../journal/discovery.js";
 import { SourceFetchError } from "../sources/adapter.js";
+import { RateLimiter, createConcurrencyLimiter } from "./rate_limiter.js";
 
 export class Explorer {
   private config: CuriosityConfig;
@@ -25,6 +26,8 @@ export class Explorer {
   private threads: ThreadPool;
   private journal: Journal;
   private seeds: SeedManager;
+  private rateLimiter: RateLimiter;
+  private limitConcurrency: <T>(fn: () => Promise<T>) => Promise<T>;
 
   constructor(
     config: CuriosityConfig,
@@ -40,6 +43,12 @@ export class Explorer {
     this.threads = threads;
     this.journal = journal;
     this.seeds = seeds;
+    
+    // Initialize rate limiter with configured delay
+    this.rateLimiter = new RateLimiter(config.exploration.fetch_delay_ms);
+    
+    // Initialize concurrency limiter
+    this.limitConcurrency = createConcurrencyLimiter(config.exploration.concurrency);
   }
 
   /**
@@ -64,100 +73,56 @@ export class Explorer {
 
       console.log(`[INFO] Initial targets: ${pendingTargets.length}`);
 
-      // Main exploration loop
+      // Main exploration loop with parallel processing
+      const concurrency = this.config.exploration.concurrency;
+      console.log(`[INFO] Using concurrency level: ${concurrency}`);
+
       while (session.isWithinLimits() && pendingTargets.length > 0) {
-        const target = pendingTargets.shift()!;
-        console.log(`[DEBUG] Exploring: ${target}`);
-
-        // Skip if we can't handle this target
-        if (!this.sources.canHandle(target)) {
-          console.log(`[DEBUG] No adapter for: ${target}`);
-          continue;
-        }
-
-        try {
-          // Fetch content
-          const content = await this.sources.fetch(target);
-          console.log(`[DEBUG] Fetched: ${content.title}`);
-
-          // Evaluate content
-          const score = await this.evaluator.evaluate(content);
-          console.log(
-            `[DEBUG] Score: ${score.overall.toFixed(2)} (novelty: ${score.novelty.toFixed(2)}, connections: ${score.connection_potential.toFixed(2)})`
-          );
-
-          // Determine decision
-          let decision: ExplorationDecision;
-          if (score.overall >= this.config.interestingness.follow_threshold) {
-            decision = "follow" as ExplorationDecision;
-          } else {
-            decision = "stop" as ExplorationDecision;
+        // Take a batch of targets up to concurrency limit
+        const batchSize = Math.min(concurrency, pendingTargets.length);
+        const batch = pendingTargets.splice(0, batchSize);
+        
+        // Filter to only targets we can handle
+        const validTargets = batch.filter(target => {
+          if (!this.sources.canHandle(target)) {
+            console.log(`[DEBUG] No adapter for: ${target}`);
+            return false;
           }
+          return true;
+        });
 
-          // Record step
-          const step: ExplorationStep = {
-            depth: session.getPathTracker().getDepth() + 1,
-            url: target,
-            content_summary: content.title || content.text.slice(0, 100),
-            interestingness_score: score.overall,
-            decision,
-            reasoning: `Overall score ${score.overall.toFixed(2)} ${decision === "follow" ? ">=" : "<"} threshold ${this.config.interestingness.follow_threshold}`,
-          };
-          session.addStep(step);
+        if (validTargets.length === 0) continue;
 
-          // Create discovery if threshold met
-          if (
-            score.overall >= this.config.interestingness.discovery_threshold
-          ) {
-            console.log(`[INFO] Discovery found: ${content.title}`);
+        console.log(`[DEBUG] Processing batch of ${validTargets.length} targets`);
 
-            const discovery = createDiscovery({
-              sessionId: session.getId(),
-              seedPath: [seed.content, ...session.getPathTracker().toSeedPath()],
-              title: content.title || "Untitled Discovery",
-              content: content.text.slice(0, 2000),
-              significance: score.overall,
-              connections: [],
-              questions: this.extractQuestions(content.text),
-              tags: [],
-            });
+        // Process targets concurrently with rate limiting
+        const results = await Promise.allSettled(
+          validTargets.map(target => this.processTarget(target, seed, session))
+        );
 
-            session.addDiscovery(discovery);
-            await this.journal.add(discovery);
-          }
-
-          // Extract and queue threads if following
-          if (decision === "follow") {
-            const links = this.sources.extractLinks(content, target);
-            const scoredLinks = links.slice(0, 10); // Limit links to process
-
-            for (const link of scoredLinks) {
-              // Add to pending or thread pool based on depth
-              if (session.getPathTracker().getDepth() < this.config.exploration.max_depth - 1) {
-                // Add to immediate pending
-                if (!pendingTargets.includes(link)) {
-                  pendingTargets.push(link);
-                }
-              } else {
-                // Add to thread pool for future
-                const thread = await this.threads.add(
-                  link,
-                  `From: ${content.title}`,
-                  session.getId(),
-                  session.getPathTracker().getDepth(),
-                  score.overall * 0.8 // Slightly lower score for child threads
-                );
-                session.addThread(thread);
+        // Collect new links from successful results
+        for (const result of results) {
+          if (result.status === "fulfilled" && result.value) {
+            const { newLinks, threadLinks } = result.value;
+            
+            // Add new links to pending (avoiding duplicates)
+            for (const link of newLinks) {
+              if (!pendingTargets.includes(link)) {
+                pendingTargets.push(link);
               }
             }
+            
+            // Add thread links to pool
+            for (const threadInfo of threadLinks) {
+              await this.threads.add(
+                threadInfo.link,
+                threadInfo.context,
+                session.getId(),
+                threadInfo.depth,
+                threadInfo.score
+              );
+            }
           }
-        } catch (error) {
-          if (error instanceof SourceFetchError) {
-            console.log(`[WARN] Fetch failed for ${target}: ${error.message}`);
-          } else {
-            console.log(`[WARN] Error processing ${target}: ${error}`);
-          }
-          // Continue to next target
         }
       }
 
@@ -186,6 +151,106 @@ export class Explorer {
       session.error(error instanceof Error ? error : new Error(String(error)));
       await session.save(this.config.data_dir);
       return session.getSession();
+    }
+  }
+
+  /**
+   * Process a single target URL
+   * Returns new links to explore and thread info to queue
+   */
+  private async processTarget(
+    target: string,
+    seed: Seed,
+    session: ExplorationSessionManager
+  ): Promise<{
+    newLinks: string[];
+    threadLinks: Array<{ link: string; context: string; depth: number; score: number }>;
+  } | null> {
+    console.log(`[DEBUG] Exploring: ${target}`);
+
+    try {
+      // Rate limit per domain
+      await this.rateLimiter.acquire(target);
+
+      // Fetch content with concurrency limit
+      const content = await this.limitConcurrency(() => this.sources.fetch(target));
+      console.log(`[DEBUG] Fetched: ${content.title}`);
+
+      // Evaluate content
+      const score = await this.evaluator.evaluate(content);
+      console.log(
+        `[DEBUG] Score: ${score.overall.toFixed(2)} (novelty: ${score.novelty.toFixed(2)}, connections: ${score.connection_potential.toFixed(2)})`
+      );
+
+      // Determine decision
+      let decision: ExplorationDecision;
+      if (score.overall >= this.config.interestingness.follow_threshold) {
+        decision = "follow" as ExplorationDecision;
+      } else {
+        decision = "stop" as ExplorationDecision;
+      }
+
+      // Record step
+      const step: ExplorationStep = {
+        depth: session.getPathTracker().getDepth() + 1,
+        url: target,
+        content_summary: content.title || content.text.slice(0, 100),
+        interestingness_score: score.overall,
+        decision,
+        reasoning: `Overall score ${score.overall.toFixed(2)} ${decision === "follow" ? ">=" : "<"} threshold ${this.config.interestingness.follow_threshold}`,
+      };
+      session.addStep(step);
+
+      // Create discovery if threshold met
+      if (score.overall >= this.config.interestingness.discovery_threshold) {
+        console.log(`[INFO] Discovery found: ${content.title}`);
+
+        const discovery = createDiscovery({
+          sessionId: session.getId(),
+          seedPath: [seed.content, ...session.getPathTracker().toSeedPath()],
+          title: content.title || "Untitled Discovery",
+          content: content.text.slice(0, 2000),
+          significance: score.overall,
+          connections: [],
+          questions: this.extractQuestions(content.text),
+          tags: [],
+        });
+
+        session.addDiscovery(discovery);
+        await this.journal.add(discovery);
+      }
+
+      // Collect links if following
+      const newLinks: string[] = [];
+      const threadLinks: Array<{ link: string; context: string; depth: number; score: number }> = [];
+
+      if (decision === "follow") {
+        const links = this.sources.extractLinks(content, target);
+        const scoredLinks = links.slice(0, 10); // Limit links to process
+
+        for (const link of scoredLinks) {
+          // Add to pending or thread pool based on depth
+          if (session.getPathTracker().getDepth() < this.config.exploration.max_depth - 1) {
+            newLinks.push(link);
+          } else {
+            threadLinks.push({
+              link,
+              context: `From: ${content.title}`,
+              depth: session.getPathTracker().getDepth(),
+              score: score.overall * 0.8,
+            });
+          }
+        }
+      }
+
+      return { newLinks, threadLinks };
+    } catch (error) {
+      if (error instanceof SourceFetchError) {
+        console.log(`[WARN] Fetch failed for ${target}: ${error.message}`);
+      } else {
+        console.log(`[WARN] Error processing ${target}: ${error}`);
+      }
+      return null;
     }
   }
 

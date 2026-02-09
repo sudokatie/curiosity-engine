@@ -48,6 +48,7 @@
     "jsdom": "^25.0.0",
     "nodemailer": "^7.0.12",
     "pdf-parse": "^2.4.5",
+    "web-tree-sitter": "^0.26.5",
     "ws": "^8.19.0",
     "yaml": "^2.7.0"
   },

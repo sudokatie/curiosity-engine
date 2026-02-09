@@ -179,9 +179,18 @@ export interface LocalSourceConfig {
   max_file_size_mb: number;
 }
 
+export interface CodeSourceConfig {
+  enabled: boolean;
+  directories: string[];
+  languages: string[];
+  include_tests: boolean;
+  max_file_size_mb: number;
+}
+
 export interface SourcesConfig {
   web: WebSourceConfig;
   local?: LocalSourceConfig;
+  code?: CodeSourceConfig;
 }
 
 export interface InterestingnessWeights {

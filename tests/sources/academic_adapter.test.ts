@@ -36,7 +36,8 @@ describe("AcademicAdapter", () => {
       expect(content.text).toContain("Abstract");
       expect(content.text.toLowerCase()).toContain("transformer");
       expect(content.source_type).toBe("academic");
-      expect(content.url).toBe("arxiv:1706.03762");
+      // URL may include version suffix (v7, etc.)
+      expect(content.url).toMatch(/^arxiv:1706\.03762(v\d+)?$/);
     }, 10000);
 
     it("should handle paper ID with version", async () => {

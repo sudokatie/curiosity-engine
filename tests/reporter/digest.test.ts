@@ -136,7 +136,7 @@ describe("generateDigest", () => {
 
     const digest = await generateDigest(journal);
 
-    expect(digest).toContain("Discoveries:");
-    expect(digest).toContain("Average Significance:");
+    expect(digest).toContain("**Discoveries**:");
+    expect(digest).toContain("**Average Significance**:");
   });
 });

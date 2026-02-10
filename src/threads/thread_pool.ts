@@ -128,7 +128,8 @@ export class ThreadPool {
       return null;
     }
 
-    const { id: _id, created_at: _created, ...safeUpdates } = updates;
+    // Only strip id from updates, allow other fields including created_at
+    const { id: _id, ...safeUpdates } = updates;
     this.threads[index] = { ...this.threads[index], ...safeUpdates };
     await this.save();
     return this.threads[index];

@@ -147,6 +147,10 @@ export class WebAdapter implements SourceAdapter {
     return content.links.filter((link) => {
       try {
         const url = new URL(link);
+        // Only allow http/https protocols
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          return false;
+        }
         return !this.isBlocked(url.hostname);
       } catch {
         return false;

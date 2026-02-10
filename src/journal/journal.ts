@@ -168,6 +168,11 @@ export class Journal {
     // Add to index
     this.index.push(discovery);
 
+    // Ensure journal directory exists before writing files
+    if (!existsSync(this.journalDir)) {
+      await mkdir(this.journalDir, { recursive: true });
+    }
+
     // Write markdown file
     const mdPath = join(this.journalDir, `${discovery.id}.md`);
     const markdown = discoveryToMarkdown(discovery);

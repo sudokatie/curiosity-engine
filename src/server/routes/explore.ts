@@ -25,6 +25,7 @@ let currentExploration: { status: string; seedId: string | null } = {
   status: 'idle',
   seedId: null,
 };
+let abortController: AbortController | null = null;
 
 export function setWebSocketBroadcast(fn: (event: ExplorationEvent) => void) {
   broadcast = fn;
@@ -67,11 +68,13 @@ exploreRouter.post('/', async (req, res) => {
     }
 
     currentExploration = { status: 'running', seedId };
+    abortController = new AbortController();
 
     broadcast?.({ type: 'exploration:start', data: { seedId } });
 
     // Run exploration async
     (async () => {
+      const signal = abortController?.signal;
       try {
         const sources = new SourceRegistry();
         sources.register(
@@ -84,7 +87,19 @@ exploreRouter.post('/', async (req, res) => {
         const evaluator = new Evaluator(config);
         const explorer = new Explorer(config, sources, evaluator, threads, journal, seeds);
 
+        // Check if cancelled before starting
+        if (signal?.aborted) {
+          broadcast?.({ type: 'exploration:cancelled', data: { seedId } });
+          return;
+        }
+
         const session = await explorer.explore(seed);
+
+        // Check if cancelled during exploration
+        if (signal?.aborted) {
+          broadcast?.({ type: 'exploration:cancelled', data: { seedId } });
+          return;
+        }
 
         broadcast?.({
           type: 'exploration:complete',
@@ -95,6 +110,10 @@ exploreRouter.post('/', async (req, res) => {
           },
         });
       } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          broadcast?.({ type: 'exploration:cancelled', data: { seedId } });
+          return;
+        }
         console.error('[Explore] Error:', error);
         broadcast?.({
           type: 'exploration:error',
@@ -102,6 +121,7 @@ exploreRouter.post('/', async (req, res) => {
         });
       } finally {
         currentExploration = { status: 'idle', seedId: null };
+        abortController = null;
       }
     })();
 
@@ -114,8 +134,17 @@ exploreRouter.post('/', async (req, res) => {
 
 // Cancel exploration
 exploreRouter.delete('/', (_req, res) => {
-  // TODO: Implement cancellation
+  if (currentExploration.status !== 'running') {
+    return res.status(400).json({ error: 'No exploration running' });
+  }
+
+  // Abort the current exploration
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+
   currentExploration = { status: 'cancelled', seedId: null };
-  broadcast?.({ type: 'exploration:complete', data: { cancelled: true } });
+  broadcast?.({ type: 'exploration:cancelled', data: {} });
   res.status(204).send();
 });

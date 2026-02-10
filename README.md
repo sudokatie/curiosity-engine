@@ -135,6 +135,13 @@ curiosity:
     decay_days: 14                  # Old threads lose priority
     revisit_probability: 0.1        # Sometimes revisit old ground
 
+  llm:
+    enabled: true                   # Enable LLM-based evaluation
+    provider: clawdbot              # clawdbot | ollama | openai
+    model: gpt-4o-mini              # Model name (provider-specific)
+    cache_evaluations: true         # Cache scores to avoid re-scoring
+    cache_ttl_hours: 24             # Cache expiry time
+
   sources:
     local:
       enabled: true
@@ -240,13 +247,13 @@ WS     /ws                     WebSocket for live updates
 
 ## Roadmap
 
-### v0.2 (In Progress)
+### v0.2 (Complete)
 - [x] Settings persistence - save UI preferences with validation
 - [x] Parallel exploration - multiple threads with per-domain rate limiting
 - [x] Local file adapter - PDFs, markdown, text files
 - [x] Code source adapter - explore codebases for patterns
 - [x] Academic source adapter - arXiv paper search and retrieval
-- [ ] LLM-based scoring - smarter interestingness evaluation
+- [x] LLM-based scoring - smarter interestingness evaluation with caching
 
 ### v0.3 (Planned)
 - [ ] Clawdbot cron integration

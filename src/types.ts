@@ -232,6 +232,16 @@ export interface LoggingConfig {
   level: "debug" | "info" | "warn" | "error";
 }
 
+export interface LlmConfig {
+  enabled: boolean;
+  provider: "clawdbot" | "ollama" | "openai";
+  model?: string;
+  base_url?: string;
+  api_key?: string;
+  cache_evaluations: boolean;
+  cache_ttl_hours: number;
+}
+
 export interface CuriosityConfig {
   heartbeat: HeartbeatConfig;
   deep_dive: DeepDiveConfig;
@@ -242,6 +252,7 @@ export interface CuriosityConfig {
   reporting: ReportingConfig;
   data_dir: string;
   logging: LoggingConfig;
+  llm: LlmConfig;
 }
 
 // ============================================================================

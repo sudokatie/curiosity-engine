@@ -1,15 +1,25 @@
 /**
  * Evaluator - Score content for interestingness
+ * 
+ * Uses LLM when enabled, falls back to heuristics.
+ * Caches results to avoid re-scoring identical content.
  */
 
+import type { Database } from "better-sqlite3";
 import type {
   SourceContent,
   InterestingnessScore,
   CuriosityConfig,
+  LlmConfig,
 } from "../types.js";
+import { EvaluationCache } from "./cache.js";
 
-// Clawdbot gateway endpoint for LLM calls
-const CLAWDBOT_GATEWAY_URL = "http://localhost:18789";
+// Default endpoints by provider
+const PROVIDER_URLS: Record<string, string> = {
+  clawdbot: "http://localhost:18789/api/chat",
+  ollama: "http://localhost:11434/api/chat",
+  openai: "https://api.openai.com/v1/chat/completions",
+};
 
 interface LlmEvaluationResponse {
   novelty: number;
@@ -28,18 +38,24 @@ interface LlmEvaluationResponse {
 
 export class Evaluator {
   private weights: CuriosityConfig["interestingness"]["weights"];
-  private useLlm: boolean;
+  private llmConfig: LlmConfig;
+  private cache: EvaluationCache | null = null;
 
-  constructor(config: CuriosityConfig, useLlm: boolean = false) {
+  constructor(config: CuriosityConfig, db?: Database) {
     this.weights = config.interestingness.weights;
-    this.useLlm = useLlm;
+    this.llmConfig = config.llm;
+
+    // Initialize cache if enabled and db provided
+    if (db && this.llmConfig.cache_evaluations) {
+      this.cache = new EvaluationCache(db, this.llmConfig.cache_ttl_hours);
+    }
   }
 
   /**
-   * Enable or disable LLM evaluation
+   * Check if LLM evaluation is enabled
    */
-  setUseLlm(enabled: boolean): void {
-    this.useLlm = enabled;
+  isLlmEnabled(): boolean {
+    return this.llmConfig.enabled;
   }
 
   /**
@@ -50,58 +66,109 @@ export class Evaluator {
     content: SourceContent,
     context?: string
   ): Promise<InterestingnessScore> {
-    if (this.useLlm) {
-      try {
-        return await this.evaluateWithLlm(content, context);
-      } catch (error) {
-        console.log(`[WARN] LLM evaluation failed, falling back to heuristics: ${error}`);
-        return this.evaluateFallback(content);
+    // Check cache first
+    if (this.cache) {
+      const hash = this.cache.hashContent(content.url, content.text);
+      const cached = this.cache.get(hash);
+      if (cached) {
+        return cached;
       }
     }
-    return this.evaluateFallback(content);
+
+    let score: InterestingnessScore;
+
+    if (this.llmConfig.enabled) {
+      try {
+        score = await this.evaluateWithLlm(content, context);
+      } catch (error) {
+        console.log(`[WARN] LLM evaluation failed, falling back to heuristics: ${error}`);
+        score = this.evaluateFallback(content);
+      }
+    } else {
+      score = this.evaluateFallback(content);
+    }
+
+    // Store in cache
+    if (this.cache) {
+      const hash = this.cache.hashContent(content.url, content.text);
+      this.cache.set(hash, score);
+    }
+
+    return score;
   }
 
   /**
-   * Evaluate content using LLM via Clawdbot gateway
+   * Evaluate content using LLM
    */
   private async evaluateWithLlm(
     content: SourceContent,
     context?: string
   ): Promise<InterestingnessScore> {
     const prompt = this.buildEvaluationPrompt(content, context);
-    
-    const response = await fetch(`${CLAWDBOT_GATEWAY_URL}/api/chat`, {
+    const url = this.llmConfig.base_url ?? PROVIDER_URLS[this.llmConfig.provider];
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Add API key for OpenAI
+    if (this.llmConfig.provider === "openai" && this.llmConfig.api_key) {
+      headers["Authorization"] = `Bearer ${this.llmConfig.api_key}`;
+    }
+
+    // Build request body based on provider
+    const body = this.buildRequestBody(prompt);
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        response_format: { type: "json_object" },
-      }),
+      headers,
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error(`Clawdbot gateway returned ${response.status}`);
+      throw new Error(`LLM API returned ${response.status}`);
     }
 
     const data = await response.json();
     const llmResponse = this.parseLlmResponse(data);
-    
+
     return this.buildScoreFromLlmResponse(llmResponse);
+  }
+
+  /**
+   * Build request body for different providers
+   */
+  private buildRequestBody(prompt: string): object {
+    const model = this.llmConfig.model;
+
+    switch (this.llmConfig.provider) {
+      case "ollama":
+        return {
+          model: model ?? "llama3.2",
+          messages: [{ role: "user", content: prompt }],
+          format: "json",
+        };
+      case "openai":
+        return {
+          model: model ?? "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+        };
+      case "clawdbot":
+      default:
+        return {
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+        };
+    }
   }
 
   /**
    * Build the evaluation prompt for the LLM
    */
   private buildEvaluationPrompt(content: SourceContent, context?: string): string {
-    const textSample = content.text.slice(0, 3000); // Limit text length
-    
+    const textSample = content.text.slice(0, 3000);
+
     return `Evaluate this content for interestingness on 5 dimensions. Rate each from 0.0 to 1.0.
 
 CONTENT:
@@ -139,20 +206,24 @@ Respond with JSON only:
    * Parse the LLM response to extract scores
    */
   private parseLlmResponse(data: unknown): LlmEvaluationResponse {
-    // Handle various response formats from the gateway
     let content: string;
-    
+
     if (typeof data === "object" && data !== null) {
       const obj = data as Record<string, unknown>;
+
+      // Handle different response formats
       if (typeof obj.content === "string") {
         content = obj.content;
       } else if (typeof obj.message === "object" && obj.message !== null) {
         const msg = obj.message as Record<string, unknown>;
         content = String(msg.content ?? "");
-      } else if (typeof obj.choices === "object" && Array.isArray(obj.choices)) {
+      } else if (Array.isArray(obj.choices) && obj.choices.length > 0) {
         const choice = obj.choices[0] as Record<string, unknown>;
         const message = choice.message as Record<string, unknown>;
         content = String(message?.content ?? "");
+      } else if (typeof obj.response === "string") {
+        // Ollama format
+        content = obj.response;
       } else {
         content = JSON.stringify(data);
       }
@@ -160,15 +231,15 @@ Respond with JSON only:
       content = String(data);
     }
 
-    // Parse JSON from content
+    // Extract JSON from content
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("No JSON found in LLM response");
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as LlmEvaluationResponse;
-    
-    // Validate scores are in range
+
+    // Validate and clamp scores
     const validateScore = (score: unknown): number => {
       const num = Number(score);
       if (isNaN(num)) return 0.5;
@@ -226,11 +297,10 @@ Respond with JSON only:
     const text = content.text;
     const links = content.links;
 
-    // Novelty: harder to estimate without context, default to moderate
-    // Could be improved with TF-IDF or embedding similarity to known content
+    // Novelty: default to moderate without context
     const novelty = 0.5;
 
-    // Connection potential: based on link count and domain diversity
+    // Connection potential: based on link diversity
     const uniqueDomains = new Set(
       links.map((l) => {
         try {
@@ -244,16 +314,8 @@ Respond with JSON only:
 
     // Explanatory power: look for explanatory language
     const explanatoryTerms = [
-      "because",
-      "therefore",
-      "thus",
-      "explains",
-      "causes",
-      "results in",
-      "leads to",
-      "due to",
-      "reason",
-      "mechanism",
+      "because", "therefore", "thus", "explains", "causes",
+      "results in", "leads to", "due to", "reason", "mechanism",
     ];
     const lowerText = text.toLowerCase();
     const explanatoryCount = explanatoryTerms.filter((term) =>
@@ -263,33 +325,19 @@ Respond with JSON only:
 
     // Contradiction: look for contrasting language
     const contradictionTerms = [
-      "however",
-      "but",
-      "contrary",
-      "unlike",
-      "challenges",
-      "disputes",
-      "wrong",
-      "incorrect",
-      "misconception",
-      "myth",
+      "however", "but", "contrary", "unlike", "challenges",
+      "disputes", "wrong", "incorrect", "misconception", "myth",
     ];
     const contradictionCount = contradictionTerms.filter((term) =>
       lowerText.includes(term)
     ).length;
     const contradiction = Math.min(contradictionCount / 4, 1);
 
-    // Generativity: count question marks and open-ended phrases
+    // Generativity: questions and open-ended phrases
     const questionCount = (text.match(/\?/g) || []).length;
     const openEndedTerms = [
-      "might",
-      "could",
-      "perhaps",
-      "possibly",
-      "what if",
-      "remains unclear",
-      "future research",
-      "open question",
+      "might", "could", "perhaps", "possibly", "what if",
+      "remains unclear", "future research", "open question",
     ];
     const openEndedCount = openEndedTerms.filter((term) =>
       lowerText.includes(term)
@@ -334,5 +382,19 @@ Respond with JSON only:
         },
       },
     };
+  }
+
+  /**
+   * Get cache stats if caching is enabled
+   */
+  getCacheStats(): { total: number; expired: number } | null {
+    return this.cache?.stats() ?? null;
+  }
+
+  /**
+   * Prune expired cache entries
+   */
+  pruneCache(): number {
+    return this.cache?.prune() ?? 0;
   }
 }

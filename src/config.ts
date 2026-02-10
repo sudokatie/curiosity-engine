@@ -63,6 +63,12 @@ const DEFAULT_CONFIG: CuriosityConfig = {
   logging: {
     level: "info",
   },
+  llm: {
+    enabled: false,
+    provider: "clawdbot",
+    cache_evaluations: true,
+    cache_ttl_hours: 24,
+  },
 };
 
 /**

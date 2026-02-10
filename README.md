@@ -255,11 +255,11 @@ WS     /ws                     WebSocket for live updates
 - [x] Academic source adapter - arXiv paper search and retrieval
 - [x] LLM-based scoring - smarter interestingness evaluation with caching
 
-### v0.3 (Planned)
-- [ ] Clawdbot cron integration
-- [ ] Channel notifications (Telegram, Discord)
-- [ ] Exploration cancellation
-- [ ] LLM seed generation from discoveries
+### v0.3 (Complete)
+- [x] Clawdbot cron integration - schedule deep dive sessions
+- [x] Channel notifications (Telegram, Discord) - breakthrough alerts
+- [x] Exploration cancellation - graceful abort via API
+- [x] LLM seed generation - from conversations, discoveries, and patterns
 
 See FEATURE-BACKLOG.md in the clawd repo for detailed acceptance criteria.
 

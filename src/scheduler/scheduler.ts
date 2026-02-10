@@ -1,16 +1,23 @@
 /**
  * Scheduler - Timing logic for exploration
- *
- * TODO: Implement full scheduling logic
  */
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+// Default minimum interval between explorations (in milliseconds)
+const DEFAULT_EXPLORE_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const DEFAULT_DIGEST_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 interface SchedulerState {
   last_explore_time: string | null;
   last_digest_time: string | null;
+}
+
+interface SchedulerConfig {
+  explore_interval_ms?: number;
+  digest_interval_ms?: number;
 }
 
 export class Scheduler {
@@ -20,9 +27,14 @@ export class Scheduler {
   };
   private filePath: string;
   private loaded = false;
+  private config: Required<SchedulerConfig>;
 
-  constructor(dataDir: string) {
+  constructor(dataDir: string, config: SchedulerConfig = {}) {
     this.filePath = join(dataDir, "scheduler.json");
+    this.config = {
+      explore_interval_ms: config.explore_interval_ms ?? DEFAULT_EXPLORE_INTERVAL_MS,
+      digest_interval_ms: config.digest_interval_ms ?? DEFAULT_DIGEST_INTERVAL_MS,
+    };
   }
 
   async load(): Promise<void> {
@@ -50,12 +62,29 @@ export class Scheduler {
   }
 
   /**
-   * Check if exploration should run
+   * Check if exploration should run based on time since last exploration
    */
   async shouldExplore(): Promise<boolean> {
-    // TODO: Implement proper scheduling logic
-    // For now, always return true
-    return true;
+    const lastTime = await this.getLastExploreTime();
+    if (!lastTime) {
+      return true; // Never explored before
+    }
+
+    const elapsed = Date.now() - lastTime.getTime();
+    return elapsed >= this.config.explore_interval_ms;
+  }
+
+  /**
+   * Check if digest should be sent based on time since last digest
+   */
+  async shouldDigest(): Promise<boolean> {
+    const lastTime = await this.getLastDigestTime();
+    if (!lastTime) {
+      return true; // Never sent digest before
+    }
+
+    const elapsed = Date.now() - lastTime.getTime();
+    return elapsed >= this.config.digest_interval_ms;
   }
 
   /**

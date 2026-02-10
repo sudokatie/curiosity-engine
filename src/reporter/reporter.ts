@@ -6,6 +6,7 @@ import type { Discovery, CuriosityConfig } from "../types.js";
 import type { Journal } from "../journal/journal.js";
 import { generateDigest } from "./digest.js";
 import { AlertManager } from "./alerts.js";
+import { sendMessage, sendDiscoveryAlert } from "../scheduler/clawdbot.js";
 
 export class Reporter {
   private config: CuriosityConfig;
@@ -27,10 +28,15 @@ export class Reporter {
     // Output to console
     console.log(digest);
 
-    // TODO: Send to channel if configured
-    // if (this.config.reporting.channel) {
-    //   await this.sendToChannel(digest);
-    // }
+    // Send to channel if configured
+    if (this.config.reporting.channel) {
+      try {
+        await sendMessage(digest, this.config.reporting.channel);
+        console.log(`[INFO] Digest sent to channel: ${this.config.reporting.channel}`);
+      } catch (error) {
+        console.error(`[WARN] Failed to send digest to channel: ${error}`);
+      }
+    }
 
     return digest;
   }
@@ -41,6 +47,7 @@ export class Reporter {
   async checkAlerts(discoveries: Discovery[]): Promise<string[]> {
     const threshold = this.config.reporting.breakthrough_threshold;
     const alertMessages: string[] = [];
+    const channel = this.config.reporting.channel;
 
     for (const discovery of discoveries) {
       if (await this.alerts.shouldAlert(discovery, threshold)) {
@@ -48,6 +55,20 @@ export class Reporter {
         console.log(message);
         await this.alerts.markAlerted(discovery.id);
         alertMessages.push(message);
+
+        // Send to channel if configured
+        if (channel && this.config.reporting.breakthrough_alerts) {
+          try {
+            await sendDiscoveryAlert(
+              discovery.title,
+              discovery.significance,
+              undefined,
+              channel
+            );
+          } catch (error) {
+            console.error(`[WARN] Failed to send alert to channel: ${error}`);
+          }
+        }
       }
     }
 

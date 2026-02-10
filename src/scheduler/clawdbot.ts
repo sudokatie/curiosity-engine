@@ -83,13 +83,110 @@ export async function unregisterHeartbeat(): Promise<void> {
   }
 }
 
+interface CronJob {
+  id: string;
+  name: string;
+  enabled: boolean;
+  schedule: { kind: string; expr: string };
+  payload: { kind: string; text: string };
+}
+
+interface CronListResponse {
+  jobs: CronJob[];
+}
+
 /**
- * Register cron job with Clawdbot
+ * Register cron job with Clawdbot for scheduled explorations
  */
-export async function registerCron(): Promise<void> {
-  // TODO: Integrate with Clawdbot cron
-  // This would use the cron tool to schedule deep dives
-  console.log("[INFO] Clawdbot cron integration not yet implemented");
+export async function registerCron(cronExpr: string = "0 3 * * *"): Promise<string | null> {
+  const jobName = "curiosity-deep-dive";
+  
+  try {
+    // Check if job already exists
+    const listResponse = await fetch(`${CLAWDBOT_GATEWAY_URL}/api/cron?action=list`);
+    if (!listResponse.ok) {
+      throw new Error(`Failed to list cron jobs: ${listResponse.status}`);
+    }
+    
+    const { jobs } = (await listResponse.json()) as CronListResponse;
+    const existing = jobs.find((j) => j.name === jobName);
+    
+    if (existing) {
+      console.log(`[INFO] Cron job '${jobName}' already exists (id: ${existing.id})`);
+      return existing.id;
+    }
+
+    // Create new cron job
+    const addResponse = await fetch(`${CLAWDBOT_GATEWAY_URL}/api/cron?action=add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        job: {
+          name: jobName,
+          enabled: true,
+          schedule: { kind: "cron", expr: cronExpr },
+          sessionTarget: "main",
+          wakeMode: "next-heartbeat",
+          payload: {
+            kind: "systemEvent",
+            text: `Curiosity Engine deep dive session.
+
+Run a scheduled exploration:
+1. Check for active seeds: curl -s http://localhost:3847/api/seeds?status=active
+2. If seeds exist, start exploration: curl -X POST http://localhost:3847/api/explore
+3. Wait for completion (check status at /api/explore/status)
+4. Report any discoveries with significance > 0.7`,
+          },
+        },
+      }),
+    });
+
+    if (!addResponse.ok) {
+      throw new Error(`Failed to add cron job: ${addResponse.status}`);
+    }
+
+    const result = (await addResponse.json()) as { id: string };
+    console.log(`[INFO] Created cron job '${jobName}' (id: ${result.id})`);
+    return result.id;
+  } catch (error) {
+    console.error("[ERROR] Failed to register cron job:", error);
+    return null;
+  }
+}
+
+/**
+ * Unregister cron job from Clawdbot
+ */
+export async function unregisterCron(): Promise<boolean> {
+  const jobName = "curiosity-deep-dive";
+  
+  try {
+    const listResponse = await fetch(`${CLAWDBOT_GATEWAY_URL}/api/cron?action=list`);
+    if (!listResponse.ok) return false;
+    
+    const { jobs } = (await listResponse.json()) as CronListResponse;
+    const existing = jobs.find((j) => j.name === jobName);
+    
+    if (!existing) {
+      console.log(`[INFO] Cron job '${jobName}' not found`);
+      return true;
+    }
+
+    const removeResponse = await fetch(
+      `${CLAWDBOT_GATEWAY_URL}/api/cron?action=remove&id=${existing.id}`,
+      { method: "DELETE" }
+    );
+
+    if (!removeResponse.ok) {
+      throw new Error(`Failed to remove cron job: ${removeResponse.status}`);
+    }
+
+    console.log(`[INFO] Removed cron job '${jobName}'`);
+    return true;
+  } catch (error) {
+    console.error("[ERROR] Failed to unregister cron job:", error);
+    return false;
+  }
 }
 
 /**

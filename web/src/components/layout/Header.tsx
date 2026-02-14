@@ -1,8 +1,8 @@
-import { Search, Sparkles, Loader2, LogOut } from 'lucide-react';
+import { Search, Sparkles, Loader2, LogOut, XCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useUIStore, type ViewMode } from '../../store/ui';
 import { useAuthStore } from '../../store/auth';
-import { useStartExploration, useExplorationStatus } from '../../api/explore';
+import { useStartExploration, useExplorationStatus, useCancelExploration } from '../../api/explore';
 
 const tabs: { id: ViewMode; label: string; num: string }[] = [
   { id: 'graph', label: 'Graph', num: '01' },
@@ -16,12 +16,19 @@ export function Header() {
   const { user, logout } = useAuthStore();
   const { data: explorationStatus } = useExplorationStatus();
   const startExploration = useStartExploration();
+  const cancelExploration = useCancelExploration();
 
   const isExploring = explorationStatus?.status === 'running';
 
   const handleExplore = () => {
     if (!isExploring) {
       startExploration.mutate({});
+    }
+  };
+
+  const handleCancel = () => {
+    if (isExploring) {
+      cancelExploration.mutate();
     }
   };
 
@@ -73,24 +80,32 @@ export function Header() {
         </div>
       </div>
 
-      {/* Explore button */}
-      <Button
-        variant="primary"
-        onClick={handleExplore}
-        disabled={isExploring || startExploration.isPending}
-      >
-        {isExploring ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Exploring
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4" />
-            Explore
-          </>
-        )}
-      </Button>
+      {/* Explore/Cancel buttons */}
+      {isExploring ? (
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-2 text-sm text-muted">
+            <Loader2 className="w-4 h-4 animate-spin text-accent" />
+            Exploring...
+          </span>
+          <Button
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={cancelExploration.isPending}
+          >
+            <XCircle className="w-4 h-4" />
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="primary"
+          onClick={handleExplore}
+          disabled={startExploration.isPending}
+        >
+          <Sparkles className="w-4 h-4" />
+          Explore
+        </Button>
+      )}
 
       {/* User section */}
       <div className="flex items-center gap-3 pl-4 border-l border-border">

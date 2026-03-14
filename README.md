@@ -64,6 +64,12 @@ npx curiosity status
 npx curiosity rss-list                                      # List feeds
 npx curiosity rss-add https://blog.com/feed.xml --name "Tech Blog"
 npx curiosity rss-poll                                      # Poll all feeds
+
+# Chain exploration - follow links between discoveries
+npx curiosity chain                                         # Default settings
+npx curiosity chain --max-depth 5 --max-links 50           # Explore deeper
+npx curiosity chain --min-priority 0.5                      # Higher quality threshold
+npx curiosity chain --since 2026-01-01                      # Recent discoveries only
 ```
 
 ### Web Interface

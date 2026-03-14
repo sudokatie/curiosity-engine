@@ -11,6 +11,7 @@ import { Journal } from "./journal/journal.js";
 import { SourceRegistry } from "./sources/source_registry.js";
 import { WebAdapter } from "./sources/web_adapter.js";
 import { RssAdapter } from "./sources/rss_adapter.js";
+import { createChainExplorer } from "./explorer/chain_explorer.js";
 import { Evaluator } from "./evaluator/evaluator.js";
 import { Explorer } from "./explorer/explorer.js";
 import { Reporter } from "./reporter/reporter.js";
@@ -66,6 +67,10 @@ async function main(): Promise<void> {
         await cmdRssRemove(args.slice(1), config);
         break;
 
+      case "chain":
+        await cmdChain(args.slice(1), config);
+        break;
+
       default:
         console.error(`Unknown command: ${command}`);
         console.error('Run with --help for usage');
@@ -95,6 +100,13 @@ RSS Feed Commands:
   rss-list                 List subscribed feeds
   rss-poll                 Poll all feeds for new items
   rss-remove <url>         Remove a feed subscription
+
+Chain Exploration:
+  chain [options]          Follow links between discoveries
+    --max-depth N          Maximum chain depth (default: 3)
+    --max-links N          Maximum links to explore (default: 20)
+    --min-priority N       Minimum priority threshold (default: 0.3)
+    --since DATE           Only consider discoveries since date
 
 Options:
   --help, -h               Show this help
@@ -418,6 +430,85 @@ async function cmdRssRemove(
 
   console.log(`To remove feed "${url}", edit config/local.yaml and remove the feed entry.`);
   console.log("\nFeed subscriptions are persisted in the config file.");
+}
+
+// Chain Exploration Command
+
+async function cmdChain(
+  args: string[],
+  config: ReturnType<typeof getConfig>
+): Promise<void> {
+  // Parse options
+  const getArg = (flag: string): string | undefined => {
+    const idx = args.indexOf(flag);
+    return idx !== -1 ? args[idx + 1] : undefined;
+  };
+
+  const maxDepth = parseInt(getArg("--max-depth") || "3", 10);
+  const maxLinks = parseInt(getArg("--max-links") || "20", 10);
+  const minPriority = parseFloat(getArg("--min-priority") || "0.3");
+  const sinceArg = getArg("--since");
+  const since = sinceArg ? new Date(sinceArg) : undefined;
+
+  if (since && isNaN(since.getTime())) {
+    console.error("Error: Invalid date format for --since");
+    process.exit(1);
+  }
+
+  // Initialize components
+  const seeds = new SeedManager(config.data_dir);
+  const threads = new ThreadPool(config.data_dir);
+  const journal = new Journal(config.data_dir);
+
+  const sources = new SourceRegistry();
+  sources.register(
+    new WebAdapter(config.sources.web, {
+      fetchDelayMs: config.exploration.fetch_delay_ms,
+      timeoutMs: config.exploration.source_timeout_ms,
+    })
+  );
+
+  if (config.sources.rss?.enabled) {
+    sources.register(new RssAdapter(config.sources.rss, config.data_dir));
+  }
+
+  const evaluator = new Evaluator(config);
+
+  // Create chain explorer
+  const chainExplorer = createChainExplorer(
+    config,
+    { maxDepth, maxLinks, minPriority, since },
+    journal,
+    sources,
+    evaluator,
+    threads,
+    seeds
+  );
+
+  console.log("Starting chain exploration...\n");
+  console.log(`Options: maxDepth=${maxDepth}, maxLinks=${maxLinks}, minPriority=${minPriority}`);
+  if (since) {
+    console.log(`Only considering discoveries since: ${since.toISOString()}`);
+  }
+  console.log();
+
+  // Run chain exploration
+  const result = await chainExplorer.explore();
+
+  // Print summary
+  console.log("\n--- Chain Exploration Summary ---");
+  console.log(`Links explored: ${result.linksExplored}`);
+  console.log(`New discoveries: ${result.newDiscoveries}`);
+  console.log(`Sessions created: ${result.sessions.length}`);
+
+  if (result.newDiscoveries > 0) {
+    console.log("\nNew discoveries:");
+    for (const session of result.sessions) {
+      for (const d of session.discoveries) {
+        console.log(`  - ${d.title} (${(d.significance * 100).toFixed(0)}%)`);
+      }
+    }
+  }
 }
 
 main().catch((error) => {

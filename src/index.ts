@@ -10,6 +10,7 @@ import { ThreadPool } from "./threads/thread_pool.js";
 import { Journal } from "./journal/journal.js";
 import { SourceRegistry } from "./sources/source_registry.js";
 import { WebAdapter } from "./sources/web_adapter.js";
+import { RssAdapter } from "./sources/rss_adapter.js";
 import { Evaluator } from "./evaluator/evaluator.js";
 import { Explorer } from "./explorer/explorer.js";
 import { Reporter } from "./reporter/reporter.js";
@@ -49,6 +50,22 @@ async function main(): Promise<void> {
         await cmdStatus(config);
         break;
 
+      case "rss-add":
+        await cmdRssAdd(args.slice(1), config);
+        break;
+
+      case "rss-list":
+        await cmdRssList(config);
+        break;
+
+      case "rss-poll":
+        await cmdRssPoll(config);
+        break;
+
+      case "rss-remove":
+        await cmdRssRemove(args.slice(1), config);
+        break;
+
       default:
         console.error(`Unknown command: ${command}`);
         console.error('Run with --help for usage');
@@ -73,6 +90,12 @@ Commands:
   digest [--since DATE]    Generate discovery digest
   status                   Show system status
 
+RSS Feed Commands:
+  rss-add <url> [--name N] Add an RSS/Atom feed subscription
+  rss-list                 List subscribed feeds
+  rss-poll                 Poll all feeds for new items
+  rss-remove <url>         Remove a feed subscription
+
 Options:
   --help, -h               Show this help
 
@@ -83,6 +106,8 @@ Examples:
   curiosity list-seeds --status active
   curiosity digest --since 2024-01-01
   curiosity status
+  curiosity rss-add https://blog.example.com/feed.xml --name "Tech Blog"
+  curiosity rss-poll
 `);
 }
 
@@ -111,6 +136,11 @@ async function cmdExplore(
       timeoutMs: config.exploration.source_timeout_ms,
     })
   );
+  
+  // Register RSS adapter if configured
+  if (config.sources.rss?.enabled) {
+    sources.register(new RssAdapter(config.sources.rss, config.data_dir));
+  }
 
   const evaluator = new Evaluator(config);
   const explorer = new Explorer(
@@ -244,6 +274,150 @@ async function cmdStatus(
   console.log(
     `Last explore: ${lastExplore ? lastExplore.toLocaleString() : "never"}`
   );
+}
+
+// RSS Feed Commands
+
+async function cmdRssAdd(
+  args: string[],
+  config: ReturnType<typeof getConfig>
+): Promise<void> {
+  const url = args.find(a => !a.startsWith("--"));
+  
+  if (!url) {
+    console.error("Error: Please provide a feed URL");
+    console.error("Usage: curiosity rss-add <url> [--name NAME]");
+    process.exit(1);
+  }
+
+  // Parse --name flag
+  const nameIdx = args.indexOf("--name");
+  const name = nameIdx !== -1 ? args[nameIdx + 1] : undefined;
+
+  const adapter = new RssAdapter(config.sources.rss, config.data_dir);
+  
+  // Try to fetch the feed to validate it
+  try {
+    const feedUrl = url.startsWith("rss://") ? url : `rss://${url.replace(/^https?:\/\//, "")}`;
+    const content = await adapter.fetch(feedUrl);
+    console.log(`Feed validated: ${content.title}`);
+  } catch (error) {
+    console.error(`Error: Could not fetch feed - ${error instanceof Error ? error.message : error}`);
+    process.exit(1);
+  }
+
+  adapter.addFeed({ url, name });
+  console.log(`Added feed: ${name || url}`);
+  console.log("\nNote: Feed subscriptions are stored in memory. Add to config/local.yaml for persistence.");
+}
+
+async function cmdRssList(
+  config: ReturnType<typeof getConfig>
+): Promise<void> {
+  const rssConfig = config.sources.rss;
+  
+  if (!rssConfig?.enabled) {
+    console.log("RSS feeds are disabled. Enable in config/local.yaml:");
+    console.log("  sources:");
+    console.log("    rss:");
+    console.log("      enabled: true");
+    console.log("      feeds:");
+    console.log('        - url: "https://example.com/feed.xml"');
+    return;
+  }
+
+  const feeds = rssConfig.feeds || [];
+  
+  if (feeds.length === 0) {
+    console.log("No RSS feeds configured.");
+    console.log("\nAdd feeds to config/local.yaml:");
+    console.log("  sources:");
+    console.log("    rss:");
+    console.log("      enabled: true");
+    console.log("      feeds:");
+    console.log('        - url: "https://example.com/feed.xml"');
+    console.log('          name: "Example Blog"');
+    return;
+  }
+
+  console.log(`RSS Feeds (${feeds.length}):\n`);
+  for (const feed of feeds) {
+    const name = feed.name || "(unnamed)";
+    const interval = feed.poll_interval_minutes || rssConfig.default_poll_interval_minutes;
+    console.log(`  ${name}`);
+    console.log(`    URL: ${feed.url}`);
+    console.log(`    Poll interval: ${interval} minutes`);
+    console.log();
+  }
+}
+
+async function cmdRssPoll(
+  config: ReturnType<typeof getConfig>
+): Promise<void> {
+  const rssConfig = config.sources.rss;
+  
+  if (!rssConfig?.enabled) {
+    console.error("RSS feeds are disabled. Enable in config first.");
+    process.exit(1);
+  }
+
+  const feeds = rssConfig.feeds || [];
+  
+  if (feeds.length === 0) {
+    console.log("No RSS feeds configured.");
+    return;
+  }
+
+  const adapter = new RssAdapter(rssConfig, config.data_dir);
+  const seeds = new SeedManager(config.data_dir);
+  
+  let totalNewItems = 0;
+
+  console.log(`Polling ${feeds.length} feeds...\n`);
+
+  for (const feed of feeds) {
+    const name = feed.name || feed.url;
+    try {
+      const feedUrl = feed.url.startsWith("rss://") 
+        ? feed.url 
+        : `rss://${feed.url.replace(/^https?:\/\//, "")}`;
+      
+      const content = await adapter.fetch(feedUrl);
+      const newItems = content.links.length;
+      
+      if (newItems > 0) {
+        console.log(`  ${name}: ${newItems} new items`);
+        
+        // Create seeds from new items
+        for (const link of content.links) {
+          await seeds.add(link, SeedSource.OBSERVATION, `RSS: ${name}`);
+        }
+        totalNewItems += newItems;
+      } else {
+        console.log(`  ${name}: no new items`);
+      }
+    } catch (error) {
+      console.error(`  ${name}: ERROR - ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  console.log(`\nTotal: ${totalNewItems} new items added as seeds`);
+}
+
+async function cmdRssRemove(
+  args: string[],
+  config: ReturnType<typeof getConfig>
+): Promise<void> {
+  const url = args[0];
+  
+  if (!url) {
+    console.error("Error: Please provide a feed URL to remove");
+    console.error("Usage: curiosity rss-remove <url>");
+    process.exit(1);
+  }
+
+  console.log(`To remove feed "${url}", edit config/local.yaml and remove the feed entry.`);
+  console.log("\nFeed subscriptions are persisted in the config file.");
 }
 
 main().catch((error) => {

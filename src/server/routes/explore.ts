@@ -9,6 +9,7 @@ import { ThreadPool } from '../../threads/thread_pool.js';
 import { Journal } from '../../journal/journal.js';
 import { SourceRegistry } from '../../sources/source_registry.js';
 import { WebAdapter } from '../../sources/web_adapter.js';
+import { RssAdapter } from '../../sources/rss_adapter.js';
 import { Evaluator } from '../../evaluator/evaluator.js';
 import { Explorer } from '../../explorer/explorer.js';
 import { SeedStatus } from '../../types.js';
@@ -83,6 +84,11 @@ exploreRouter.post('/', async (req, res) => {
             timeoutMs: config.exploration.source_timeout_ms,
           })
         );
+        
+        // Register RSS adapter if configured
+        if (config.sources.rss?.enabled) {
+          sources.register(new RssAdapter(config.sources.rss, config.data_dir));
+        }
 
         const evaluator = new Evaluator(config);
         const explorer = new Explorer(config, sources, evaluator, threads, journal, seeds);

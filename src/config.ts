@@ -35,6 +35,12 @@ const DEFAULT_CONFIG: CuriosityConfig = {
       preferred_domains: [],
       respect_robots: true,
     },
+    rss: {
+      enabled: false,
+      feeds: [],
+      default_poll_interval_minutes: 60,
+      max_items_per_feed: 20,
+    },
   },
   interestingness: {
     weights: {

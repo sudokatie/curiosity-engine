@@ -59,6 +59,11 @@ npx curiosity digest --since 2026-01-01
 
 # Check status
 npx curiosity status
+
+# RSS/Atom feed subscriptions
+npx curiosity rss-list                                      # List feeds
+npx curiosity rss-add https://blog.com/feed.xml --name "Tech Blog"
+npx curiosity rss-poll                                      # Poll all feeds
 ```
 
 ### Web Interface
@@ -174,6 +179,16 @@ curiosity:
         - cs.AI
         - cs.LG
         - cs.CL
+
+    rss:
+      enabled: true
+      default_poll_interval_minutes: 60
+      max_items_per_feed: 20
+      feeds:
+        - url: "https://blog.example.com/feed.xml"
+          name: "Example Blog"
+        - url: "https://news.site/rss"
+          poll_interval_minutes: 30
 
   reporting:
     daily_digest: true

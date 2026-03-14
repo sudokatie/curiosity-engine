@@ -193,11 +193,25 @@ export interface AcademicSourceConfig {
   categories: string[];  // e.g., ["cs.AI", "cs.LG"]
 }
 
+export interface RssFeed {
+  url: string;
+  name?: string;
+  poll_interval_minutes?: number;
+}
+
+export interface RssSourceConfig {
+  enabled: boolean;
+  feeds: RssFeed[];
+  default_poll_interval_minutes: number;
+  max_items_per_feed: number;
+}
+
 export interface SourcesConfig {
   web: WebSourceConfig;
   local?: LocalSourceConfig;
   code?: CodeSourceConfig;
   academic?: AcademicSourceConfig;
+  rss?: RssSourceConfig;
 }
 
 export interface InterestingnessWeights {
